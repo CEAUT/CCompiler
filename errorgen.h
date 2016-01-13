@@ -9,8 +9,8 @@ extern bool errorOccuerd;
 #define NO_LINE_SPECIFIED -13
 
 // Error lists:
-#define FILE_NOT_FOUND 0
-
+#define ERR_FILE_NOT_FOUND 0
+#define ERR_SINGLE_CUOT_NOTCLOSE 1
 
 /*
  * This function generate error from every part of the code

@@ -10,10 +10,11 @@ void generateErr(int lineNum, int errorCode, char *parameter)
     errorOccuerd = true;
     switch (errorCode)
     {
-        case 0:
+        case ERR_FILE_NOT_FOUND:
             printf("The file '%s' is not existing.\n",parameter);
             break;
-        case 1:
+        case ERR_SINGLE_CUOT_NOTCLOSE:
+            printf("Expected to have ' for characters in line %d\n",lineNum);
             break;
     }
 }
