@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include "errorgen.h"
 
+
 bool errorOccuerd;
 void generateErr(int lineNum, int errorCode, char *parameter)
 {

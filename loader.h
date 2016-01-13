@@ -10,7 +10,6 @@
 #include "limits.h"
 #include <string>
 
-using namespace std;
 
 struct token{
     int type;

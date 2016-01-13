@@ -20,4 +20,5 @@ extern bool errorOccuerd;
  */
 void generateErr(int lineNum, int errorCode, char *parameter);
 bool isAnyErr();
+
 #endif //CCOMPILER_ERRORGEN_H
