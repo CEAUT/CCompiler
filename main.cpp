@@ -1,9 +1,9 @@
 #include <iostream>
+#include "loader.h"
 
 using namespace std;
 
-int main() {
-    cout << "another hello world." << endl;
-    cout << "Hello, World!" << endl;
+int main( int argc, char *argv[] ) {
+    loadfromfile("file.txt");
     return 0;
 }
