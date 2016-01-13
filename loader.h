@@ -19,7 +19,7 @@ struct token{
     token *next;
 };
 
-// Different type of possible tokens
+// Different type of possible tokens_
 #define UNKNOWN_TOKEN -1
 #define NAME_TOKEN 0        // General showing of keyword or identifier
 #define KEYWORD_TOKEN 1
