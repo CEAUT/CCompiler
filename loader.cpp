@@ -112,7 +112,6 @@ void loadfromfile(char *path)
 
 void pushToken(token t)
 {
-
     if(tokenNum == 0)
     {
         head = (token *)malloc(sizeof(token));
