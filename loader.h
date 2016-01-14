@@ -19,7 +19,8 @@ struct token{
 };
 
 // Different type of possible tokens_
-#define UNKNOWN_TOKEN -1
+#define UNKNOWN_TOKEN -2
+#define SPACE_TOKEN -1
 #define NAME_TOKEN 0        // General showing of keyword or identifier
 #define KEYWORD_TOKEN 1
 #define IDENTIFIER_TOKEN 2
@@ -35,7 +36,7 @@ extern token *head;
 
 void pushToStr(char *str,char chr);
 
-void loadfromfile(char *path);
+token *loadfromfile(char *path);    //  returns the pointer of the first node of the token
 
 void pushToken(token t);
 

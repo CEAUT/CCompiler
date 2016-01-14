@@ -3,10 +3,11 @@
 #include <stdio.h>
 #include <cstdlib>
 #include <string.h>
+#include <stack>
+using namespace std;
 
 int main( int argc, char *argv[] )
 {
-
     // Loading phase
     if(argc <= 1){
         printf("Enter the file path to compile : \n");
@@ -20,7 +21,7 @@ int main( int argc, char *argv[] )
 
     while (ptr != NULL)
     {
-        printf("%d : ->%s<- s:%d\n",ptr->lineNumber,ptr->value,strlen(ptr->value));
+        printf("%d : %s s:%d\n",ptr->lineNumber,ptr->value,ptr->type);
         ptr=ptr->next;
     }
 

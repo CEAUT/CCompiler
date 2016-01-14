@@ -11,14 +11,14 @@ int tokenNum;
 token *head;
 token *last;
 
-void loadfromfile(char *path)
+token *loadfromfile(char *path)
 {
     FILE *file;
     file = fopen(path,"r");     // Open the file for reading the source from it
     if(file == NULL)
     {
         generateErr(NO_LINE_SPECIFIED,ERR_FILE_NOT_FOUND,path);
-        return;
+        return NULL;
     }
 
     currentLine = 1;
@@ -27,84 +27,108 @@ void loadfromfile(char *path)
     last = NULL;
 
     token tok;
+
     strcpy(tok.value,"");
 
-    char chr;
-    int lastType = getType(chr);
+    char chr = fgetc(file);
+
+    while((getType(chr) == SPACE_TOKEN) && (!feof(file))) {
+        if (chr == '\n') {
+            currentLine++;
+        }
+        chr = fgetc(file);
+    }
+    tok.lineNumber = currentLine;
     pushToStr(tok.value,chr);
+    int lastType = getType(chr);
 
     while(!feof(file)){
-
         chr = fgetc(file);
-
         if(chr == '\n') {
+            if(strlen(tok.value) != 0){
+                tok.type = lastType;
+                pushToken(tok);
+                strcpy(tok.value,"");
+            }
             currentLine++;
-            tok.lineNumber = currentLine - 1;
-            if (strlen(tok.value) != 0) {
-                pushToken(tok);
-                strcpy(tok.value, "");
-            }
+            tok.lineNumber = currentLine;
             lastType = UNKNOWN_TOKEN;
+
         }else if(chr == '\t'){
-            lastType = UNKNOWN_TOKEN;
-        }else if(chr == ' '){
-            tok.lineNumber = currentLine;
-            if((strlen(tok.value) != 0) && (strcmp(tok.value," ") != 0)) {
+            if(strlen(tok.value) != 0){
+                tok.type = lastType;
+                pushToken(tok);
+                strcpy(tok.value,"");
+            }
+
+        }else if(getType(chr) == PUNC_TOKEN){
+            if(strlen(tok.value) != 0){
+                tok.type = lastType;
+                tok.lineNumber = currentLine;
+                pushToken(tok);
+                strcpy(tok.value,"");
+            }
+
+            if(chr == 39){
+                pushToStr(tok.value,chr);
+                chr = fgetc(file);
+                while((chr != 39) && (!feof(file) && (chr != '\n')) ){
+                    pushToStr(tok.value,chr);
+                    chr = fgetc(file);
+                }
+                pushToStr(tok.value,chr);
+                lastType = CHAR_TOKEN;
+                tok.type = lastType;
+                pushToken(tok);
+                strcpy(tok.value,"");
+            } else{
+                lastType = PUNC_TOKEN;
+                tok.type = lastType;
+                pushToStr(tok.value,chr);
+                pushToken(tok);
+                strcpy(tok.value,"");
+                lastType = UNKNOWN_TOKEN;
+            }
+        }else if(chr == ' ') {
+            if (strlen(tok.value) != 0) {
+                tok.type = lastType;
                 pushToken(tok);
                 strcpy(tok.value, "");
-            }else{
-                continue;
             }
-            /*chr = fgetc(file);
-            if(chr != ' ') {
-                pushToStr(tok.value, chr);
-                lastType = getType(chr);
-            }*/
-
-        }else if(chr == EOF) {
-            tok.lineNumber = currentLine;
-            pushToken(tok);
-            strcpy(tok.value,"");
+        }else if((getType(chr) == NUM_TOKEN) && (lastType != NAME_TOKEN)){
+            pushToStr(tok.value,chr);
             lastType = getType(chr);
-            break;
-        } else{
-
-            if(getType(chr) != lastType){
-                if((lastType == NAME_TOKEN) && (getType(chr) == NUM_TOKEN)){
-                    pushToStr(tok.value,chr);
-                    tok.type = IDENTIFIER_TOKEN;
-                }else{
-                    tok.lineNumber = currentLine;
+        }else if(getType(chr) == OPERATOR_TOKEN){
+            if(lastType != OPERATOR_TOKEN)
+            {
+                if(strlen(tok.value) != 0)
+                {
                     tok.type = lastType;
                     pushToken(tok);
                     strcpy(tok.value,"");
-                    pushToStr(tok.value,chr);
-                    lastType = getType(chr);
                 }
+            }
+            lastType = OPERATOR_TOKEN;
+            pushToStr(tok.value,chr);
+        }else{
 
-            }else{
+            if(lastType == UNKNOWN_TOKEN)
+                lastType = getType(chr);
 
-                if(getType(chr) == PUNC_TOKEN) {
-                    if(chr == 39){      // For reading the assignment to character
-                        pushToStr(tok.value,chr);
-                        chr = fgetc(file);
-                        pushToStr(tok.value,chr);
-                        chr = fgetc(file);
-                        if(chr != 39){      // ' punctuation mark for closing the character scope
-                            generateErr(currentLine,ERR_SINGLE_CUOT_NOTCLOSE,NULL);
-                        }else{
-                            pushToStr(tok.value,chr);
-                            tok.type = CHAR_TOKEN;
-                            tok.lineNumber = currentLine;
-                            strcpy(tok.value, "");
-                        }
-                    }else {
-                        tok.lineNumber = currentLine;
+            if(lastType != getType(chr)){
+                if((lastType == NAME_TOKEN) && (getType(chr) == NUM_TOKEN)){
+                    pushToStr(tok.value,chr);
+                } else{
+                    if(strlen(tok.value) != 0){
+                        tok.type = lastType;
                         pushToken(tok);
-                        strcpy(tok.value, "");
+                        strcpy(tok.value,"");
+                        lastType = UNKNOWN_TOKEN;
                     }
                 }
+            }else{
                 pushToStr(tok.value,chr);
+                lastType = getType(chr);
             }
         }
     }
@@ -112,7 +136,6 @@ void loadfromfile(char *path)
 
 void pushToken(token t)
 {
-
 
     if(tokenNum == 0)
     {
@@ -166,9 +189,12 @@ int getType(char chr)
             (chr == ',' ) || (chr == '"') ||
             (chr == '(') || (chr == ')') ||
             (chr == '{') || (chr == '}') ||
-            (chr == 39) ||      // stands for th ' character
+            (chr == 39) ||      // stands for the ' character
             (chr == ';'))
         return PUNC_TOKEN;
+
+    if((chr == ' ') || (chr == '\n') || (chr == '\t'))
+        return SPACE_TOKEN;
 }
 
 void pushToStr(char *str,char chr)
