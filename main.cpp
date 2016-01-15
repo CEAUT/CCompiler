@@ -1,5 +1,6 @@
 
 #include "loader.h"
+#include "limits.h"
 #include <stdio.h>
 #include <cstdlib>
 #include <string.h>
@@ -8,15 +9,18 @@ using namespace std;
 
 int main( int argc, char *argv[] )
 {
+    token *head;
     // Loading phase
+
     if(argc <= 1){
         printf("Enter the file path to compile : \n");
         char *path = (char *)malloc(1000 * sizeof(char));
         scanf("%s",path);
-        loadfromfile(path);
+        head = loadfromfile(path);
     }else{
-        loadfromfile(argv[1]);
+        head = loadfromfile(argv[1]);
     }
+
     token *ptr = head;
 
     while (ptr != NULL)
