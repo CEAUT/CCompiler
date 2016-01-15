@@ -17,6 +17,9 @@ void generateErr(int lineNum, int errorCode, char *parameter)
         case ERR_SINGLE_CUOT_NOTCLOSE:
             printf("Expected to have ' for characters in line %d\n",lineNum);
             break;
+        case ERR_UNKNOWN_PREPROCESS:
+            printf("'%s' is an unknow preprecess command in line %d.\n",parameter,lineNum);
+            break;
     }
 }
 

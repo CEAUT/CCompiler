@@ -22,6 +22,7 @@ token *loadfromfile(char *path)
     currentLine = 1;
     tokenNum = 0;
     token *head = NULL;
+
     token *last = NULL;
 
     token tok;
@@ -36,8 +37,27 @@ token *loadfromfile(char *path)
         }
         chr = fgetc(file);
     }
+
+    if(chr == '#') {                    // Check for the preprocessor statements
+        char preprocessLine[LINE_LEN_LIM];
+        fgets(preprocessLine, LINE_LEN_LIM, file);
+        printf("%s\n", preprocessLine);
+        char *preType = strtok(preprocessLine," ");
+        if(strcmp(preType,"include") != 0) {
+            generateErr(currentLine,ERR_UNKNOWN_PREPROCESS,preType);
+        } else{
+            char delim[2] = " ";
+            delim[0] = (char)34;
+            char *address = strtok(NULL,delim);
+            token *headOfIncludeFile = loadfromfile(address);
+
+            last = gotoLastNode(headOfIncludeFile);
+        }
+        chr = fgetc(file);
+    }
     tok.lineNumber = currentLine;
-    pushToStr(tok.value,chr);
+    pushToStr(tok.value, chr);
+
     int lastType = getType(chr);
 
     while(!feof(file)){
@@ -202,6 +222,9 @@ int getType(char chr)
 
     if((chr == ' ') || (chr == '\n') || (chr == '\t'))
         return SPACE_TOKEN;
+
+    if(chr == '#')
+        return PREPRO_TOKEN;
 }
 
 void pushToStr(char *str,char chr)
@@ -209,4 +232,14 @@ void pushToStr(char *str,char chr)
     int len = strlen(str);
     str[len] = chr;
     str[len + 1] = 0;
+}
+
+token *gotoLastNode(token *head)
+{
+    token *ptr = head;
+    while (ptr->next != NULL)
+    {
+        ptr = ptr->next;
+    }
+    return ptr;
 }

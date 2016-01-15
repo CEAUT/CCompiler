@@ -13,7 +13,7 @@
 
 struct token{
     int type;
-    char value[IDENTIFIER_NAME_LENGHT];
+    char value[IDENTIFIER_NAME_LEN_LIM];
     int lineNumber;
     token *next;
 };
@@ -28,19 +28,20 @@ struct token{
 #define NUM_TOKEN 4
 #define CHAR_TOKEN 5
 #define PUNC_TOKEN 6
+#define PREPRO_TOKEN 7
 
 extern int currentLine;
 extern int tokenNum;        // Size of the linked list of tokens
-extern token *last;
-extern token *head;
+
 
 void pushToStr(char *str,char chr);
 
 token *loadfromfile(char *path);    //  returns the pointer of the first node of the token
 
-void pushToken(token t);
+void pushToken(token t, token **head, token **last);
 
 int getType(char chr);
 
+token *gotoLastNode(token *head);
 
 #endif //CCOMPILER_LOADER_H
