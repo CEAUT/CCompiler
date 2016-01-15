@@ -50,7 +50,7 @@ token *loadfromfile(char *path)
             delim[0] = (char)34;
             char *address = strtok(NULL,delim);
             token *headOfIncludeFile = loadfromfile(address);
-
+            head = headOfIncludeFile;
             last = gotoLastNode(headOfIncludeFile);
         }
         chr = fgetc(file);
