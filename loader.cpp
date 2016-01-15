@@ -1,15 +1,13 @@
 //
 // Created by ahmad on 1/12/16.
 //
-
 #include <string.h>
 #include "loader.h"
 #include "errorgen.h"
 
 int currentLine;
 int tokenNum;
-token *head;
-token *last;
+
 
 token *loadfromfile(char *path)
 {
@@ -23,8 +21,8 @@ token *loadfromfile(char *path)
 
     currentLine = 1;
     tokenNum = 0;
-    head = NULL;
-    last = NULL;
+    token *head = NULL;
+    token *last = NULL;
 
     token tok;
 
@@ -47,25 +45,33 @@ token *loadfromfile(char *path)
         if(chr == '\n') {
             if(strlen(tok.value) != 0){
                 tok.type = lastType;
-                pushToken(tok);
+                pushToken(tok,&head,&last);
                 strcpy(tok.value,"");
             }
             currentLine++;
             tok.lineNumber = currentLine;
             lastType = UNKNOWN_TOKEN;
 
-        }else if(chr == '\t'){
-            if(strlen(tok.value) != 0){
+        }else if(chr == '\t') {
+            if (strlen(tok.value) != 0) {
                 tok.type = lastType;
-                pushToken(tok);
-                strcpy(tok.value,"");
+                pushToken(tok, &head, &last);
+                strcpy(tok.value, "");
             }
-
+        }else if(chr == '#'){
+            if (strlen(tok.value) != 0) {
+                tok.type = lastType;
+                pushToken(tok, &head, &last);
+                strcpy(tok.value, "");
+            }
+            char preprocessLine[LINE_LEN_LIM];
+            fgets(preprocessLine,LINE_LEN_LIM,file);
+            printf("%s\n",preprocessLine);
         }else if(getType(chr) == PUNC_TOKEN){
             if(strlen(tok.value) != 0){
                 tok.type = lastType;
                 tok.lineNumber = currentLine;
-                pushToken(tok);
+                pushToken(tok,&head,&last);
                 strcpy(tok.value,"");
             }
 
@@ -79,32 +85,38 @@ token *loadfromfile(char *path)
                 pushToStr(tok.value,chr);
                 lastType = CHAR_TOKEN;
                 tok.type = lastType;
-                pushToken(tok);
+                pushToken(tok,&head,&last);
                 strcpy(tok.value,"");
             } else{
                 lastType = PUNC_TOKEN;
                 tok.type = lastType;
                 pushToStr(tok.value,chr);
-                pushToken(tok);
+                pushToken(tok,&head,&last);
                 strcpy(tok.value,"");
                 lastType = UNKNOWN_TOKEN;
             }
         }else if(chr == ' ') {
             if (strlen(tok.value) != 0) {
                 tok.type = lastType;
-                pushToken(tok);
+                pushToken(tok,&head,&last);
                 strcpy(tok.value, "");
             }
-        }else if((getType(chr) == NUM_TOKEN) && (lastType != NAME_TOKEN)){
-            pushToStr(tok.value,chr);
+        }else if((getType(chr) == NUM_TOKEN) && (lastType != NAME_TOKEN)) {
+            pushToStr(tok.value, chr);
             lastType = getType(chr);
+        }else if((lastType == OPERATOR_TOKEN) && (getType(chr) == NUM_TOKEN)){
+            tok.type = lastType;
+            pushToken(tok,&head,&last);
+            strcpy(tok.value, "");
+            lastType = NUM_TOKEN;
+            pushToStr(tok.value,chr);
         }else if(getType(chr) == OPERATOR_TOKEN){
             if(lastType != OPERATOR_TOKEN)
             {
                 if(strlen(tok.value) != 0)
                 {
                     tok.type = lastType;
-                    pushToken(tok);
+                    pushToken(tok,&head,&last);
                     strcpy(tok.value,"");
                 }
             }
@@ -121,7 +133,7 @@ token *loadfromfile(char *path)
                 } else{
                     if(strlen(tok.value) != 0){
                         tok.type = lastType;
-                        pushToken(tok);
+                        pushToken(tok,&head,&last);
                         strcpy(tok.value,"");
                         lastType = UNKNOWN_TOKEN;
                     }
@@ -132,31 +144,27 @@ token *loadfromfile(char *path)
             }
         }
     }
+    return head;
 }
 
-void pushToken(token t)
+void pushToken(token t, token **head, token **last)
 {
 
     if(tokenNum == 0)
     {
-        head = (token *)malloc(sizeof(token));
-        last = head;
-        if(head == NULL)
-        {
-            printf("Cannot allocate memory.\n");
-            return;
-        }
-        head->type = t.type;
-        head->lineNumber = t.lineNumber;
-        strcpy(head->value, t.value);
-        head->next = NULL;
+        (*head) = (token *)malloc(sizeof(token));
+        (*last) = (*head);
+        (*head)->type = t.type;
+        (*head)->lineNumber = t.lineNumber;
+        strcpy((*head)->value, t.value);
+        (*head)->next = NULL;
     }else{
-        last->next = (token *)malloc(sizeof(token));
-        last = last->next;
-        strcpy(last->value, t.value);
-        last->lineNumber = t.lineNumber;
-        last->type = t.type;
-        last->next = NULL;
+        (*last)->next = (token *)malloc(sizeof(token));
+        (*last) = (*last)->next;
+        strcpy((*last)->value, t.value);
+        (*last)->lineNumber = t.lineNumber;
+        (*last)->type = t.type;
+        (*last)->next = NULL;
     }
     tokenNum ++;
 }
@@ -181,8 +189,7 @@ int getType(char chr)
             (chr == '=') || (chr == '*') ||
             (chr == '/') || (chr == '>') ||
             (chr == '<') || (chr == '!') ||
-            (chr == '&') || (chr == '|') ||
-            (chr == '#'))
+            (chr == '&') || (chr == '|'))
         return OPERATOR_TOKEN;
 
     if ((chr == '+') || (chr == '-') ||
