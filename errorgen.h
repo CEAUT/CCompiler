@@ -11,7 +11,9 @@ extern bool errorOccuerd;
 // Error lists:
 #define ERR_FILE_NOT_FOUND 0
 #define ERR_SINGLE_CUOT_NOTCLOSE 1
-#define ERR_UNKNOWN_PREPROCESS 3
+#define ERR_UNKNOWN_PREPROCESS 2
+
+#define ERR_PUNCT_NOT_EXPECTED 3
 
 /*
  * This function generate error from every part of the code
@@ -19,7 +21,7 @@ extern bool errorOccuerd;
  * - the second argument is the error code number that can accept values from the above choices
  * - the third argument gets the parameter needed for generating the error like the name of identifier
  */
-void generateErr(int lineNum, int errorCode, char *parameter);
+void generateErr(int lineNum, int errorCode, char *parameter, char *file);
 bool isAnyErr();
 
 #endif //CCOMPILER_ERRORGEN_H

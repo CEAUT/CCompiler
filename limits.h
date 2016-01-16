@@ -7,5 +7,6 @@
 
 #define IDENTIFIER_NAME_LEN_LIM 31
 #define LINE_LEN_LIM 200
+#define STR_LEN_LIM 300
 
 #endif //CCOMPILER_LIMITS_H

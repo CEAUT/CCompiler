@@ -1,6 +1,7 @@
 
 #include "loader.h"
 #include "limits.h"
+#include "syntax.h"
 #include <stdio.h>
 #include <cstdlib>
 #include <string.h>
@@ -29,11 +30,12 @@ int main( int argc, char *argv[] )
         ptr=ptr->next;
     }
 
-    printf("%d\n",tokenNum);
+    checkPunc(head);
 
     // Check whether any error occurred in the phase or not
     if(isAnyErr()){
         return 0;
     }
+
     return 0;
 }

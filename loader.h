@@ -9,7 +9,7 @@
 #include <stdio.h>
 #include "limits.h"
 #include <string>
-
+#include <vector>
 
 struct token{
     int type;
@@ -38,10 +38,12 @@ void pushToStr(char *str,char chr);
 
 token *loadfromfile(char *path);    //  returns the pointer of the first node of the token
 
-void pushToken(token t, token **head, token **last);
+void pushToken(token t, token **head, token **last,std::vector<char *> *srcDef, std::vector<char *> *destDef);
 
 int getType(char chr);
 
 token *gotoLastNode(token *head);
+
+char *stringTokenizer(char *string,char delim,int tokeN);
 
 #endif //CCOMPILER_LOADER_H

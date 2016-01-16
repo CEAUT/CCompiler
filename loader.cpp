@@ -4,10 +4,13 @@
 #include <string.h>
 #include "loader.h"
 #include "errorgen.h"
+#include <vector>
+
 
 int currentLine;
 int tokenNum;
 
+using namespace std;
 
 token *loadfromfile(char *path)
 {
@@ -15,7 +18,7 @@ token *loadfromfile(char *path)
     file = fopen(path,"r");     // Open the file for reading the source from it
     if(file == NULL)
     {
-        generateErr(NO_LINE_SPECIFIED,ERR_FILE_NOT_FOUND,path);
+        generateErr(NO_LINE_SPECIFIED,ERR_FILE_NOT_FOUND,path,"");
         return NULL;
     }
 
@@ -24,6 +27,9 @@ token *loadfromfile(char *path)
     token *head = NULL;
 
     token *last = NULL;
+
+    vector<char *> srcDef;
+    vector<char *> destDef;
 
     token tok;
 
@@ -41,17 +47,20 @@ token *loadfromfile(char *path)
     if(chr == '#') {                    // Check for the preprocessor statements
         char preprocessLine[LINE_LEN_LIM];
         fgets(preprocessLine, LINE_LEN_LIM, file);
-        printf("%s\n", preprocessLine);
-        char *preType = strtok(preprocessLine," ");
-        if(strcmp(preType,"include") != 0) {
-            generateErr(currentLine,ERR_UNKNOWN_PREPROCESS,preType);
-        } else{
-            char delim[2] = " ";
-            delim[0] = (char)34;
-            char *address = strtok(NULL,delim);
+        char *preType = stringTokenizer(preprocessLine,' ',0);
+
+        if(strcmp(preType,"include") == 0)
+        {
+            char *address = stringTokenizer(preprocessLine,34,1);
             token *headOfIncludeFile = loadfromfile(address);
             head = headOfIncludeFile;
             last = gotoLastNode(headOfIncludeFile);
+        } else if(strcmp(preType,"define") == 0) {
+            srcDef.push_back(stringTokenizer(preprocessLine ,' ', 1));
+            destDef.push_back(stringTokenizer(preprocessLine ,' ', 2));
+            printf("%s : %s\n",srcDef[srcDef.size()-1],destDef[destDef.size()-1]);
+        } else{
+            generateErr(currentLine,ERR_UNKNOWN_PREPROCESS,preType,path);
         }
         chr = fgetc(file);
     }
@@ -65,7 +74,7 @@ token *loadfromfile(char *path)
         if(chr == '\n') {
             if(strlen(tok.value) != 0){
                 tok.type = lastType;
-                pushToken(tok,&head,&last);
+                pushToken(tok,&head,&last,&srcDef,&destDef);
                 strcpy(tok.value,"");
             }
             currentLine++;
@@ -75,23 +84,38 @@ token *loadfromfile(char *path)
         }else if(chr == '\t') {
             if (strlen(tok.value) != 0) {
                 tok.type = lastType;
-                pushToken(tok, &head, &last);
+                pushToken(tok, &head, &last,&srcDef,&destDef);
                 strcpy(tok.value, "");
             }
         }else if(chr == '#'){
+
             if (strlen(tok.value) != 0) {
                 tok.type = lastType;
-                pushToken(tok, &head, &last);
+                pushToken(tok, &head, &last,&srcDef,&destDef);
                 strcpy(tok.value, "");
             }
             char preprocessLine[LINE_LEN_LIM];
             fgets(preprocessLine,LINE_LEN_LIM,file);
-            printf("%s\n",preprocessLine);
+            char *preType = stringTokenizer(preprocessLine,' ',0);
+            if(strcmp(preType,"include") == 0)
+            {
+                char *address = stringTokenizer(preprocessLine,34,1);
+                token *headOfIncludeFile = loadfromfile(address);
+                last->next = headOfIncludeFile;
+                last = gotoLastNode(headOfIncludeFile);
+            } else if(strcmp(preType,"define") == 0) {
+                srcDef.push_back(stringTokenizer(preprocessLine ,' ', 1));
+                destDef.push_back(stringTokenizer(preprocessLine ,' ', 2));
+                printf("%s : %s\n",srcDef[srcDef.size()-1],destDef[destDef.size()-1]);
+            } else{
+                generateErr(currentLine,ERR_UNKNOWN_PREPROCESS,preType,path);
+            }
+
         }else if(getType(chr) == PUNC_TOKEN){
             if(strlen(tok.value) != 0){
                 tok.type = lastType;
                 tok.lineNumber = currentLine;
-                pushToken(tok,&head,&last);
+                pushToken(tok,&head,&last,&srcDef,&destDef);
                 strcpy(tok.value,"");
             }
 
@@ -105,38 +129,39 @@ token *loadfromfile(char *path)
                 pushToStr(tok.value,chr);
                 lastType = CHAR_TOKEN;
                 tok.type = lastType;
-                pushToken(tok,&head,&last);
+                pushToken(tok,&head,&last,&srcDef,&destDef);
                 strcpy(tok.value,"");
             } else{
                 lastType = PUNC_TOKEN;
                 tok.type = lastType;
                 pushToStr(tok.value,chr);
-                pushToken(tok,&head,&last);
+                pushToken(tok,&head,&last,&srcDef,&destDef);
                 strcpy(tok.value,"");
                 lastType = UNKNOWN_TOKEN;
             }
         }else if(chr == ' ') {
             if (strlen(tok.value) != 0) {
                 tok.type = lastType;
-                pushToken(tok,&head,&last);
+                pushToken(tok,&head,&last,&srcDef,&destDef);
                 strcpy(tok.value, "");
             }
-        }else if((getType(chr) == NUM_TOKEN) && (lastType != NAME_TOKEN)) {
-            pushToStr(tok.value, chr);
-            lastType = getType(chr);
         }else if((lastType == OPERATOR_TOKEN) && (getType(chr) == NUM_TOKEN)){
             tok.type = lastType;
-            pushToken(tok,&head,&last);
+            pushToken(tok,&head,&last,&srcDef,&destDef);
             strcpy(tok.value, "");
             lastType = NUM_TOKEN;
             pushToStr(tok.value,chr);
+        }else if((getType(chr) == NUM_TOKEN) && (lastType != NAME_TOKEN)) {
+            pushToStr(tok.value, chr);
+            lastType = getType(chr);
+
         }else if(getType(chr) == OPERATOR_TOKEN){
             if(lastType != OPERATOR_TOKEN)
             {
                 if(strlen(tok.value) != 0)
                 {
                     tok.type = lastType;
-                    pushToken(tok,&head,&last);
+                    pushToken(tok,&head,&last,&srcDef,&destDef);
                     strcpy(tok.value,"");
                 }
             }
@@ -149,11 +174,12 @@ token *loadfromfile(char *path)
 
             if(lastType != getType(chr)){
                 if((lastType == NAME_TOKEN) && (getType(chr) == NUM_TOKEN)){
+                    lastType = NAME_TOKEN;
                     pushToStr(tok.value,chr);
                 } else{
                     if(strlen(tok.value) != 0){
                         tok.type = lastType;
-                        pushToken(tok,&head,&last);
+                        pushToken(tok,&head,&last,&srcDef,&destDef);
                         strcpy(tok.value,"");
                         lastType = UNKNOWN_TOKEN;
                     }
@@ -167,8 +193,16 @@ token *loadfromfile(char *path)
     return head;
 }
 
-void pushToken(token t, token **head, token **last)
+void pushToken(token t, token **head, token **last,vector<char *> *srcDef, vector<char *> *destDef)
 {
+    // Check for the defined value and replace the defined value
+    for (int i = 0; i < srcDef->size(); ++i) {
+        if(strcmp(t.value,(*srcDef)[i]) == 0)
+        {
+            strcpy(t.value,(*destDef)[i]);
+            break;
+        }
+    }
 
     if(tokenNum == 0)
     {
@@ -242,4 +276,32 @@ token *gotoLastNode(token *head)
         ptr = ptr->next;
     }
     return ptr;
+}
+
+char *stringTokenizer(char *string,char delim,int tokeN)
+{
+    char res[STR_LEN_LIM] = "";
+    int j = 0;
+    int k;
+    for (int i = 0; i < tokeN; ++i) {
+        while (string[j] != delim){
+            j++;
+            if(j == strlen(string))
+                return NULL;
+        }
+        j++;
+    }
+    k = j;
+    while (string[k] != delim){
+        k++;
+        if(k == strlen(string))
+            break;
+    }
+    k--;
+    for (int l = 0; l < (k - j + 1); ++l) {
+        res[l] = string[j + l];
+    }
+    res[k - j + 1] = 0;
+
+    return res;
 }
