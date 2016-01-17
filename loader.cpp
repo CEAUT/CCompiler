@@ -34,6 +34,7 @@ token *loadfromfile(char *path)
     token tok;
 
     strcpy(tok.value,"");
+    strcpy(tok.fileName,path);
 
     char chr = fgetc(file);
 
@@ -56,9 +57,9 @@ token *loadfromfile(char *path)
             head = headOfIncludeFile;
             last = gotoLastNode(headOfIncludeFile);
         } else if(strcmp(preType,"define") == 0) {
-            srcDef.push_back(stringTokenizer(preprocessLine ,' ', 1));
-            destDef.push_back(stringTokenizer(preprocessLine ,' ', 2));
-            printf("%s : %s\n",srcDef[srcDef.size()-1],destDef[destDef.size()-1]);
+            printf("%s\n",preprocessLine);
+
+            printf("%s : %s\n",stringTokenizer(preprocessLine ,' ', 1),stringTokenizer(preprocessLine ,' ', 2));
         } else{
             generateErr(currentLine,ERR_UNKNOWN_PREPROCESS,preType,path);
         }
@@ -71,6 +72,10 @@ token *loadfromfile(char *path)
 
     while(!feof(file)){
         chr = fgetc(file);
+        if(chr == 'q') {
+            printf("Q is detected.\n");
+            printf("%d\n",lastType);
+        }
         if(chr == '\n') {
             if(strlen(tok.value) != 0){
                 tok.type = lastType;
@@ -154,7 +159,15 @@ token *loadfromfile(char *path)
         }else if((getType(chr) == NUM_TOKEN) && (lastType != NAME_TOKEN)) {
             pushToStr(tok.value, chr);
             lastType = getType(chr);
-
+        }else if((lastType == OPERATOR_TOKEN) && (getType(chr) == NAME_TOKEN)){
+            if(strlen(tok.value) != 0){
+                lastType = OPERATOR_TOKEN;
+                tok.lineNumber = currentLine;
+                pushToken(tok,&head,&last,&srcDef,&destDef);
+                strcpy(tok.value,"");
+            }
+            lastType = NAME_TOKEN;
+            pushToStr(tok.value,chr);
         }else if(getType(chr) == OPERATOR_TOKEN){
             if(lastType != OPERATOR_TOKEN)
             {
@@ -195,6 +208,19 @@ token *loadfromfile(char *path)
 
 void pushToken(token t, token **head, token **last,vector<char *> *srcDef, vector<char *> *destDef)
 {
+    if(t.type == NAME_TOKEN)
+    {
+        if(strcmp(t.value,"true") == 0){
+            strcpy(t.value,"1");
+            t.type = NUM_TOKEN;
+        }else if(strcmp(t.value,"false") == 0){
+            strcpy(t.value,"0");
+            t.type = NUM_TOKEN;
+        }else{
+            t.type = idOrKeyword(t.value);
+        }
+
+    }
     // Check for the defined value and replace the defined value
     for (int i = 0; i < srcDef->size(); ++i) {
         if(strcmp(t.value,(*srcDef)[i]) == 0)
@@ -203,6 +229,9 @@ void pushToken(token t, token **head, token **last,vector<char *> *srcDef, vecto
             break;
         }
     }
+
+    if(strlen(t.value) == 0)
+        return;
 
     if(tokenNum == 0)
     {
@@ -304,4 +333,29 @@ char *stringTokenizer(char *string,char delim,int tokeN)
     res[k - j + 1] = 0;
 
     return res;
+}
+
+int idOrKeyword(char *value)
+{
+    if(strcmp(value,"int") == 0) {
+        return KEYWORD_TOKEN;
+    }else if(strcmp(value,"float") == 0){
+        return KEYWORD_TOKEN;
+    }else if(strcmp(value,"char") == 0){
+        return KEYWORD_TOKEN;
+    }else if(strcmp(value,"bool") == 0){
+        return KEYWORD_TOKEN;
+    }else if(strcmp(value,"void") == 0){
+        return KEYWORD_TOKEN;
+    }else if(strcmp(value,"while") == 0){
+        return KEYWORD_TOKEN;
+    }else if(strcmp(value,"if") == 0){
+        return KEYWORD_TOKEN;
+    }else if(strcmp(value,"main") == 0){
+        return KEYWORD_TOKEN;
+    }else if(strcmp(value,"null") == 0){
+        return KEYWORD_TOKEN;
+    }else{
+        return IDENTIFIER_TOKEN;
+    }
 }

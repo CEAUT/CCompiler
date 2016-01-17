@@ -16,6 +16,7 @@ struct token{
     char value[IDENTIFIER_NAME_LEN_LIM];
     int lineNumber;
     token *next;
+    char fileName[FILE_PATH_LEN_LIM];
 };
 
 // Different type of possible tokens_
@@ -45,5 +46,7 @@ int getType(char chr);
 token *gotoLastNode(token *head);
 
 char *stringTokenizer(char *string,char delim,int tokeN);
+
+int idOrKeyword(char *value);
 
 #endif //CCOMPILER_LOADER_H

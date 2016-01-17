@@ -6,10 +6,10 @@
 #define CCOMPILER_SYNTAX_H
 
 #include "loader.h"
-#define PUNC_PARAN_OP 1
-#define PUNC_PARAN_CL -1
-#define PUNC_BRACE_OP 2
-#define PUNC_BRACE_CL -2
+#define PUNC_PARAN_OP 11
+#define PUNC_PARAN_CL -11
+#define PUNC_BRACE_OP 12
+#define PUNC_BRACE_CL -12
 
 void checkPunc(token *head);
 #endif //CCOMPILER_SYNTAX_H

@@ -10,10 +10,15 @@ extern bool errorOccuerd;
 
 // Error lists:
 #define ERR_FILE_NOT_FOUND 0
+
 #define ERR_SINGLE_CUOT_NOTCLOSE 1
 #define ERR_UNKNOWN_PREPROCESS 2
-
 #define ERR_PUNCT_NOT_EXPECTED 3
+#define ERR_PUNCT_CLOSE_EXPECTED 4
+
+#define ERR_DEF_VAR 100
+#define ERR_NOT_DEF_VAR 101
+#define ERR_NOT_INIT_VAR 102
 
 /*
  * This function generate error from every part of the code

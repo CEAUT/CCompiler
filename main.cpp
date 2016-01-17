@@ -2,11 +2,13 @@
 #include "loader.h"
 #include "limits.h"
 #include "syntax.h"
+#include "identifierTable.h"
 #include <stdio.h>
 #include <cstdlib>
 #include <string.h>
 #include <stack>
 using namespace std;
+
 
 int main( int argc, char *argv[] )
 {
@@ -37,5 +39,9 @@ int main( int argc, char *argv[] )
         return 0;
     }
 
+    newInt("art",12,"file");
+    newInt("at",12,"file");
+    newInt("a",12,"file");
+    printf("%s\n",getId("y"));
     return 0;
 }
