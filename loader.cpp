@@ -355,7 +355,21 @@ int idOrKeyword(char *value)
         return KEYWORD_TOKEN;
     }else if(strcmp(value,"null") == 0){
         return KEYWORD_TOKEN;
+    }else if(strcmp(value,"min") == 0){
+        return KEYWORD_TOKEN;
+    }else if(strcmp(value,"max") == 0){
+        return KEYWORD_TOKEN;
+
     }else{
         return IDENTIFIER_TOKEN;
     }
+}
+
+token *getLastToken(token *start,token *dest)
+{
+    token *ptr = start;
+    while (ptr->next != dest)
+        ptr = ptr->next;
+
+    return ptr;
 }

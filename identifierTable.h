@@ -35,13 +35,13 @@ extern variable *headOfVariable;
 extern variable *lastOfVariable;
 extern int numOfVariable;
 
-char *getNewId();
 char *getId(char *name);          // Returns the id of a variable
 void newInt(char *name, int lineNum, char *file);
 void newFloat(char *name, int lineNum, char *file);
 void newBool(char *name, int lineNum, char *file);
 void newChar(char *name, int lineNum, char *file);
 variable *findVar(char *name);
+bool hasValue(char *name);
 
 
 
@@ -51,5 +51,9 @@ extern number *lastOfNumber;
 extern int numOfNumber;
 
 char *newNumber(char *value);
+number *findNum(char *value);
+
+extern int numOfTemp;
+char *newTempMem();
 
 #endif //CCOMPILER_IDENTIFIERTABLE_H

@@ -17,6 +17,16 @@ number *headOfNumber;
 number *lastOfNumber;
 int numOfNumber;
 
+int numOfTemp;
+
+char *newTempMem()
+{
+    char *res = (char *)malloc((NUMBER_LEN_LIM + 2) * sizeof(char));
+    sprintf(res,"_t%d",numOfTemp);
+    numOfTemp++;
+    return res;
+}
+
 void newInt(char *name, int lineNum, char *file)
 {
     if(findVar(name) == NULL){
@@ -126,13 +136,12 @@ variable *findVar(char *name)
     return NULL;
 }
 
-char *getNewId()
+bool hasValue(char *name)
 {
-    char *res = (char *)malloc((NUMBER_LEN_LIM + 2) * sizeof(char));
-    sprintf(res,"id%d",numOfVariable);
-    numOfVariable++;
-    return res;
+    variable *var = findVar(name);
+    return var->isInit;
 }
+
 
 char *getId(char *name)
 {
@@ -149,18 +158,39 @@ char *getId(char *name)
 
 char *newNumber(char *value)
 {
-    if(headOfNumber == NULL) {
-        headOfNumber = (number *)malloc(sizeof(number));
-        lastOfNumber = headOfNumber;
-    } else{
-        lastOfNumber->next = (number *)malloc(sizeof(number));
-        lastOfNumber = lastOfNumber->next;
-    }
-    lastOfNumber->next = NULL;
-    lastOfNumber->id = numOfNumber;
-    strcpy(lastOfNumber->value,value);
-    numOfNumber++;
     char *res = (char *) malloc((NUMBER_LEN_LIM + 2) * sizeof(char));
-    sprintf(res, "_t%d", lastOfNumber->id);
+    number *num = findNum(value);
+    if(num == NULL) {
+
+        // Add new number to the linked list
+        if (headOfNumber == NULL) {
+            headOfNumber = (number *) malloc(sizeof(number));
+            lastOfNumber = headOfNumber;
+        } else {
+            lastOfNumber->next = (number *) malloc(sizeof(number));
+            lastOfNumber = lastOfNumber->next;
+        }
+        lastOfNumber->next = NULL;
+        lastOfNumber->id = numOfNumber;
+        strcpy(lastOfNumber->value, value);
+        numOfNumber++;
+        sprintf(res, "_n%d", lastOfNumber->id);
+    } else {
+
+        // This number is existed in the linked list and it can be reusable
+        sprintf(res, "_n%d", num->id);
+    }
     return res;
+}
+
+number *findNum(char *value)
+{
+    number *ptr = headOfNumber;
+    while (ptr != NULL)
+    {
+        if(0 == strcmp(ptr->value,value))
+            return ptr;
+        ptr = ptr->next;
+    }
+    return NULL;
 }

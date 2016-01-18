@@ -49,4 +49,6 @@ char *stringTokenizer(char *string,char delim,int tokeN);
 
 int idOrKeyword(char *value);
 
+token *getLastToken(token *start,token *dest);
+
 #endif //CCOMPILER_LOADER_H

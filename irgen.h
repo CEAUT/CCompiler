@@ -7,5 +7,5 @@
 
 #include "loader.h"
 
-void expressionCal(token *start, token *end);
+char *expressionCal(token *start, token *end);
 #endif //CCOMPILER_IRGEN_H

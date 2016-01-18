@@ -7,6 +7,9 @@
 #include <cstdlib>
 #include <string.h>
 #include <stack>
+#include <malloc.h>
+#include "irgen.h"
+
 using namespace std;
 
 
@@ -39,9 +42,6 @@ int main( int argc, char *argv[] )
         return 0;
     }
 
-    newInt("art",12,"file");
-    newInt("at",12,"file");
-    newInt("a",12,"file");
-    printf("%s\n",getId("y"));
+    expressionCal(head,getLastToken(head,ptr));
     return 0;
 }
