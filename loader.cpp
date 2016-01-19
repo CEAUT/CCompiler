@@ -6,12 +6,35 @@
 #include "errorgen.h"
 #include <vector>
 
-
-int currentLine;
 int tokenNum;
 
 using namespace std;
 
+void preProces(FILE *outStream,char *src)
+{
+    printf("%s\n",src);
+    FILE *srcFile = fopen(src,"r");
+    char c = fgetc(srcFile);
+    while (c != EOF){
+        if(c == '#') {
+            char preprocessLine[LINE_LEN_LIM];
+            fgets(preprocessLine,LINE_LEN_LIM,srcFile);
+            printf("Line is %s\n",preprocessLine);
+            char *ppType = stringTokenizer(preprocessLine,' ',0);
+            printf("Type is %s\n",ppType);
+            if(strcmp(ppType,"include") == 0){
+                char *path;
+                path = stringTokenizer(preprocessLine,34,1);
+                preProces(outStream,path);
+            } else{
+                generateErr(0,ERR_UNKNOWN_PREPROCESS,ppType,src);
+            }
+        }else {
+            fputc(c, outStream);
+        }
+        c = fgetc(srcFile);
+    }
+}
 token *loadfromfile(char *path)
 {
     FILE *file;
@@ -22,7 +45,7 @@ token *loadfromfile(char *path)
         return NULL;
     }
 
-    currentLine = 1;
+    int currentLine = 1;
     tokenNum = 0;
     token *head = NULL;
 
@@ -45,26 +68,6 @@ token *loadfromfile(char *path)
         chr = fgetc(file);
     }
 
-    if(chr == '#') {                    // Check for the preprocessor statements
-        char preprocessLine[LINE_LEN_LIM];
-        fgets(preprocessLine, LINE_LEN_LIM, file);
-        char *preType = stringTokenizer(preprocessLine,' ',0);
-
-        if(strcmp(preType,"include") == 0)
-        {
-            char *address = stringTokenizer(preprocessLine,34,1);
-            token *headOfIncludeFile = loadfromfile(address);
-            head = headOfIncludeFile;
-            last = gotoLastNode(headOfIncludeFile);
-        } else if(strcmp(preType,"define") == 0) {
-            printf("%s\n",preprocessLine);
-
-            printf("%s : %s\n",stringTokenizer(preprocessLine ,' ', 1),stringTokenizer(preprocessLine ,' ', 2));
-        } else{
-            generateErr(currentLine,ERR_UNKNOWN_PREPROCESS,preType,path);
-        }
-        chr = fgetc(file);
-    }
     tok.lineNumber = currentLine;
     pushToStr(tok.value, chr);
 
@@ -72,10 +75,7 @@ token *loadfromfile(char *path)
 
     while(!feof(file)){
         chr = fgetc(file);
-        if(chr == 'q') {
-            printf("Q is detected.\n");
-            printf("%d\n",lastType);
-        }
+
         if(chr == '\n') {
             if(strlen(tok.value) != 0){
                 tok.type = lastType;
@@ -91,29 +91,6 @@ token *loadfromfile(char *path)
                 tok.type = lastType;
                 pushToken(tok, &head, &last,&srcDef,&destDef);
                 strcpy(tok.value, "");
-            }
-        }else if(chr == '#'){
-
-            if (strlen(tok.value) != 0) {
-                tok.type = lastType;
-                pushToken(tok, &head, &last,&srcDef,&destDef);
-                strcpy(tok.value, "");
-            }
-            char preprocessLine[LINE_LEN_LIM];
-            fgets(preprocessLine,LINE_LEN_LIM,file);
-            char *preType = stringTokenizer(preprocessLine,' ',0);
-            if(strcmp(preType,"include") == 0)
-            {
-                char *address = stringTokenizer(preprocessLine,34,1);
-                token *headOfIncludeFile = loadfromfile(address);
-                last->next = headOfIncludeFile;
-                last = gotoLastNode(headOfIncludeFile);
-            } else if(strcmp(preType,"define") == 0) {
-                srcDef.push_back(stringTokenizer(preprocessLine ,' ', 1));
-                destDef.push_back(stringTokenizer(preprocessLine ,' ', 2));
-                printf("%s : %s\n",srcDef[srcDef.size()-1],destDef[destDef.size()-1]);
-            } else{
-                generateErr(currentLine,ERR_UNKNOWN_PREPROCESS,preType,path);
             }
 
         }else if(getType(chr) == PUNC_TOKEN){
@@ -150,15 +127,30 @@ token *loadfromfile(char *path)
                 pushToken(tok,&head,&last,&srcDef,&destDef);
                 strcpy(tok.value, "");
             }
-        }else if((lastType == OPERATOR_TOKEN) && (getType(chr) == NUM_TOKEN)){
+        }else if((getType(chr) == OPERATOR_TOKEN) && (lastType == NAME_TOKEN)){
             tok.type = lastType;
             pushToken(tok,&head,&last,&srcDef,&destDef);
+            strcpy(tok.value,"");
+            lastType = OPERATOR_TOKEN;
+            pushToStr(tok.value,chr);
+        }else if((lastType == OPERATOR_TOKEN) && (getType(chr) == NUM_TOKEN)) {
+            tok.type = lastType;
+            pushToken(tok, &head, &last, &srcDef, &destDef);
             strcpy(tok.value, "");
             lastType = NUM_TOKEN;
-            pushToStr(tok.value,chr);
+            pushToStr(tok.value, chr);
+        }else if((getType(chr) == NAME_TOKEN) && (lastType == PUNC_TOKEN)){
+            if (strlen(tok.value) != 0){
+                tok.type = lastType;
+                pushToken(tok,&head,&last,&srcDef,&destDef);
+                strcpy(tok.value,"");
+                lastType = NAME_TOKEN;
+                pushToStr(tok.value,chr);
+            }
         }else if((getType(chr) == NUM_TOKEN) && (lastType != NAME_TOKEN)) {
             pushToStr(tok.value, chr);
             lastType = getType(chr);
+
         }else if((lastType == OPERATOR_TOKEN) && (getType(chr) == NAME_TOKEN)){
             if(strlen(tok.value) != 0){
                 lastType = OPERATOR_TOKEN;
@@ -309,7 +301,8 @@ token *gotoLastNode(token *head)
 
 char *stringTokenizer(char *string,char delim,int tokeN)
 {
-    char res[STR_LEN_LIM] = "";
+    char *res = (char *)malloc(STR_LEN_LIM * sizeof(char));
+    strcpy(res,"");
     int j = 0;
     int k;
     for (int i = 0; i < tokeN; ++i) {
@@ -357,9 +350,8 @@ int idOrKeyword(char *value)
         return KEYWORD_TOKEN;
     }else if(strcmp(value,"min") == 0){
         return KEYWORD_TOKEN;
-    }else if(strcmp(value,"max") == 0){
+    }else if(strcmp(value,"max") == 0) {
         return KEYWORD_TOKEN;
-
     }else{
         return IDENTIFIER_TOKEN;
     }

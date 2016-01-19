@@ -31,24 +31,16 @@ struct token{
 #define PUNC_TOKEN 6
 #define PREPRO_TOKEN 7
 
-extern int currentLine;
 extern int tokenNum;        // Size of the linked list of tokens
 
-
+void preProces(FILE *outStream,char *src);      //      Read the source and save it to outStream and if it see another preprocess it call it self
 void pushToStr(char *str,char chr);
-
 token *loadfromfile(char *path);    //  returns the pointer of the first node of the token
-
 void pushToken(token t, token **head, token **last,std::vector<char *> *srcDef, std::vector<char *> *destDef);
-
 int getType(char chr);
-
 token *gotoLastNode(token *head);
-
 char *stringTokenizer(char *string,char delim,int tokeN);
-
 int idOrKeyword(char *value);
-
 token *getLastToken(token *start,token *dest);
 
 #endif //CCOMPILER_LOADER_H

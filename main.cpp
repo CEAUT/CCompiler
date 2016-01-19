@@ -15,6 +15,9 @@ using namespace std;
 
 int main( int argc, char *argv[] )
 {
+    FILE *pre = fopen("/home/ahmad/ClionProjects/export.c","w");
+
+
     token *head;
     // Loading phase
 
@@ -22,11 +25,14 @@ int main( int argc, char *argv[] )
         printf("Enter the file path to compile : \n");
         char *path = (char *)malloc(1000 * sizeof(char));
         scanf("%s",path);
-        head = loadfromfile(path);
+        preProces(pre,argv[1]);
     }else{
-        head = loadfromfile(argv[1]);
+        preProces(pre,argv[1]);
     }
 
+    fclose(pre);
+
+    head = loadfromfile("/home/ahmad/ClionProjects/export.c");
     token *ptr = head;
 
     while (ptr != NULL)
@@ -42,6 +48,8 @@ int main( int argc, char *argv[] )
         return 0;
     }
 
-    expressionCal(head,getLastToken(head,ptr));
+    statement(head);
+
+
     return 0;
 }

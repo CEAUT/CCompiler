@@ -19,6 +19,15 @@ int numOfNumber;
 
 int numOfTemp;
 
+void setValue(char *name,int lineNum)
+{
+    variable *var = findVar(name);
+    if(var != NULL){
+        var->isInit = true;
+    } else{
+        generateErr(lineNum,ERR_NOT_DEF_VAR,name,NULL);
+    }
+}
 char *newTempMem()
 {
     char *res = (char *)malloc((NUMBER_LEN_LIM + 2) * sizeof(char));

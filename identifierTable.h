@@ -42,6 +42,7 @@ void newBool(char *name, int lineNum, char *file);
 void newChar(char *name, int lineNum, char *file);
 variable *findVar(char *name);
 bool hasValue(char *name);
+void setValue(char *name,int lineNum);
 
 
 
