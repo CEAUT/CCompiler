@@ -11,15 +11,35 @@
 bool seenMain;
 int lableCounter;
 
+
 char *getNewLable()
 {
     char *res = (char *)malloc((NUMBER_LEN_LIM + 1) * sizeof(char));
     sprintf(res,"L%d",++lableCounter);
     return res;
 }
-void assignment(char *varaibleName,token *head)
+
+token *ifStatement(char *condition,token *head)
 {
-    ;
+    char *lable1 = getNewLable();
+    char *lable2 = getNewLable();
+    printf("IF %s GOTO %s ELSE %s\n",condition,lable1,lable2);
+    printf("%s:\n",lable1);
+
+    head = head->next;
+    token *last = statement(head);
+    if(strcmp(last->value,"else") == 0){
+        char *lable3 = getNewLable();
+        printf("GOTO %s:\n",lable3);
+        printf("%s:\n",lable2);
+        last = last->next;      // last points to something other than else
+        last = statement(last);
+        printf("%s:\n",lable3);
+    } else {
+        printf("%s:\n", lable2);
+    }
+    last = getLastToken(head,last);
+    return last;
 }
 
 void mainAnalyser(token *head){
@@ -29,7 +49,7 @@ void mainAnalyser(token *head){
     statement(head);
     printf("RETURN\n");
 }
-void statement(token *head)
+token *statement(token *head)
 {
     using namespace std;
 
@@ -63,6 +83,7 @@ void statement(token *head)
 
 
         } else if (strcmp(ptr->value, "int") == 0) {
+
             ptr = ptr->next;
             newInt(ptr->value, ptr->lineNumber, ptr->fileName);
             char *id = getId(ptr->value);
@@ -81,14 +102,14 @@ void statement(token *head)
 
             ptr = ptr->next;
             newFloat(ptr->value, ptr->lineNumber, ptr->fileName);
+            char *id = getId(ptr->value);
             ptr = ptr->next;
             if (strcmp(ptr->value, "=") == 0) {
                 token *headOfExp = ptr->next;
-
                 while (strcmp(ptr->next->value, ";") != 0) {
                     ptr = ptr->next;
                 }
-                expressionCal(headOfExp, ptr);
+                printf("%s := %s\n", id ,expressionCal(headOfExp, ptr));
             } else if (strcmp(ptr->value, ";") != 0) {
                 // an error could be generated
             }
@@ -98,12 +119,13 @@ void statement(token *head)
             ptr = ptr->next;
             newBool(ptr->value, ptr->lineNumber, ptr->fileName);
             ptr = ptr->next;
+            char *id = getId(ptr->value);
             if (strcmp(ptr->next->value, "=") == 0) {
                 token *headOfExp = ptr->next->next;
                 while (strcmp(ptr->next->next->value, ";") != 0) {
                     ptr = ptr->next;
                 }
-                expressionCal(headOfExp, ptr);
+                printf("%s := %s\n", id ,expressionCal(headOfExp, ptr));
             } else if (strcmp(ptr->value, ";") != 0) {
                 // an error could be generated
             }
@@ -119,9 +141,42 @@ void statement(token *head)
             } else if (strcmp(ptr->value, ";") != 0) {
                 // an error could be generated
             }
+        }else if(ptr->type == IDENTIFIER_TOKEN){
+            char *id = getId(ptr->value);
+            if(strcmp(ptr->next->value,"=") == 0) {
+                setValue(ptr->value, ptr->lineNumber);
+                ptr = ptr->next;        // ptr points to the =
+                ptr = ptr->next;        // ptr points to the after =
+                token *head = ptr;
+                while (strcmp(ptr->next->value, ";") != 0) {
+                    ptr = ptr->next;
+                }
+                printf("%s := %s\n", id ,expressionCal(head, ptr));
+            } else{
+
+            }
+        } else if (strcmp(ptr->value, "if") == 0){
+            ptr = ptr->next;     // It shoud be (
+            stack<int > exp;
+            exp.push(PUNC_PARAN_OP);
+
+            ptr = ptr->next;     // It shoud be something after (
+            token *headOfExp = ptr;
+            do{
+                if(strcmp(ptr->next->value,"(") == 0) {
+                    exp.push(PUNC_PARAN_OP);
+                }else if (strcmp(ptr->next->value,")") == 0){
+                    exp.pop();
+                }
+                ptr = ptr->next;
+            }while (exp.size() != 0);
+            ptr = ifStatement(expressionCal(headOfExp,ptr),ptr);
         }
+
         ptr = ptr->next;
     }while(scope.size() != 0);
+
+    return ptr;
 }
 void generateIR(token *head)
 {
@@ -173,7 +228,7 @@ char *expressionCal(token *start, token *end) {
         } else if (ptr->type == NUM_TOKEN) {
             _operand.push_back(newNumber(ptr->value));
         } else if (ptr->type == IDENTIFIER_TOKEN) {
-            _operand.push_back(ptr->value);
+            _operand.push_back(getId(ptr->value));
         } else if (ptr->type == OPERATOR_TOKEN) {
             _operator.push_back(ptr->value);
         } else if (ptr->type == CHAR_TOKEN) {
@@ -207,6 +262,7 @@ char *expressionCal(token *start, token *end) {
     }
 
     // 2nd priority is + and -
+
     for (int i = 0; i < _operator.size(); ++i) {
         if((strcmp(_operator[i],"+") == 0) ||
            (strcmp(_operator[i],"-") == 0)){
@@ -223,9 +279,9 @@ char *expressionCal(token *start, token *end) {
     //  3rd priority is <= >= < >
     for (int i = 0; i < _operator.size(); ++i) {
         if((strcmp(_operator[i],">=") == 0) ||
-                (strcmp(_operator[i],"<=") == 0) ||
-                (strcmp(_operator[i],"<") == 0) ||
-                (strcmp(_operator[i],">") == 0)){
+           (strcmp(_operator[i],"<=") == 0) ||
+           (strcmp(_operator[i],"<") == 0) ||
+           (strcmp(_operator[i],">") == 0)){
             tempMem = newTempMem();
             printf("%s := %s %s %s\n",tempMem,_operand[i],_operator[i],_operand[i+1]);
             strcpy(_operand[i],tempMem);
@@ -263,6 +319,18 @@ char *expressionCal(token *start, token *end) {
     // 6th priority is ||
     for (int i = 0; i < _operator.size(); ++i) {
         if((strcmp(_operator[i],"||") == 0)){
+            tempMem = newTempMem();
+            printf("%s := %s %s %s\n",tempMem,_operand[i],_operator[i],_operand[i+1]);
+            strcpy(_operand[i],tempMem);
+            _operand.erase(_operand.begin() + (i + 1));
+            _operator.erase(_operator.begin() + i);
+            i--;
+        }
+    }
+
+    // 7th priority is =
+    for (int i = 0; i < _operator.size(); ++i) {
+        if((strcmp(_operator[i],"=") == 0)){
             tempMem = newTempMem();
             printf("%s := %s %s %s\n",tempMem,_operand[i],_operator[i],_operand[i+1]);
             strcpy(_operand[i],tempMem);
