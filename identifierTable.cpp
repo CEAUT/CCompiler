@@ -33,6 +33,7 @@ char *newTempMem()
     char *res = (char *)malloc((NUMBER_LEN_LIM + 2) * sizeof(char));
     sprintf(res,"_t%d",numOfTemp);
     numOfTemp++;
+    //printf("khar %d\n",sizeof(res));
     return res;
 }
 
@@ -48,7 +49,7 @@ void newInt(char *name, int lineNum, char *file)
             lastOfVariable->next = (variable *)malloc(sizeof(variable));
             lastOfVariable = lastOfVariable->next;
         }
-
+        lastOfVariable->type = TYPE_INT;
         lastOfVariable->id = numOfVariable;
         lastOfVariable->next = NULL;
         strcpy(lastOfVariable->name,name);
@@ -72,7 +73,7 @@ void newFloat(char *name, int lineNum, char *file)
             lastOfVariable->next = (variable *)malloc(sizeof(variable));
             lastOfVariable = lastOfVariable->next;
         }
-
+        lastOfVariable->type = TYPE_FLOAT;
         lastOfVariable->id = numOfVariable;
         lastOfVariable->next = NULL;
         strcpy(lastOfVariable->name,name);
@@ -96,7 +97,7 @@ void newBool(char *name, int lineNum, char *file)
             lastOfVariable->next = (variable *)malloc(sizeof(variable));
             lastOfVariable = lastOfVariable->next;
         }
-
+        lastOfVariable->type = TYPE_BOOL;
         lastOfVariable->id = numOfVariable;
         lastOfVariable->next = NULL;
         strcpy(lastOfVariable->name,name);
@@ -120,7 +121,7 @@ void newChar(char *name, int lineNum, char *file)
             lastOfVariable->next = (variable *)malloc(sizeof(variable));
             lastOfVariable = lastOfVariable->next;
         }
-
+        lastOfVariable->type = TYPE_CHAR;
         lastOfVariable->id = numOfVariable;
         lastOfVariable->next = NULL;
         strcpy(lastOfVariable->name,name);
@@ -151,7 +152,14 @@ bool hasValue(char *name)
     return var->isInit;
 }
 
-
+int getType(char *name)
+{
+    variable *var = findVar(name);
+    if(var != NULL)
+        return var->type;
+    else
+        return TYPE_NOT_DECLARE;
+}
 char *getId(char *name)
 {
     variable *var = findVar(name);

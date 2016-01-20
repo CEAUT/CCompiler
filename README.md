@@ -11,6 +11,7 @@ Extra features implemented those weren't mentioned in the project explanation :
     -   Unlimited spacing character identifying
     -   If with scope or without scope
     -   while with scope or without scope
+    -   Repeated number has the same id
 
 
 These items should be mentioned :

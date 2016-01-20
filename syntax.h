@@ -11,5 +11,11 @@
 #define PUNC_BRACE_OP 12
 #define PUNC_BRACE_CL -12
 
+extern int Emain;
+
+void Pcheck(token *node,char To);
+void Keycheck(token * node);
+void Tcheck(token * node,char To);
+
 void checkPunc(token *head);
 #endif //CCOMPILER_SYNTAX_H

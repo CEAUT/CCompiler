@@ -266,7 +266,19 @@ char *expressionCal(token *start, token *end) {
         } else if (ptr->type == NUM_TOKEN) {
             _operand.push_back(newNumber(ptr->value));
         } else if (ptr->type == IDENTIFIER_TOKEN) {
-            _operand.push_back(getId(ptr->value));
+            int type = getType(ptr->value);
+
+            if((type == TYPE_INT) || (type == TYPE_FLOAT) || (type == TYPE_BOOL) || (type == TYPE_BOOL)){
+                if(hasValue(ptr->value)){
+                    _operand.push_back(getId(ptr->value));
+                } else{
+                    generateErr(ptr->lineNumber,ERR_NOT_INIT_VAR,ptr->value,ptr->fileName);
+                    _operand.push_back(getId(ptr->value));
+                }
+            } else if(type == TYPE_NOT_DECLARE){    // This variable is not declared yet
+                generateErr(ptr->lineNumber,ERR_NOT_DEF_VAR,ptr->value,ptr->fileName);
+                _operand.push_back(ptr->value);
+            }
         } else if (ptr->type == OPERATOR_TOKEN) {
             _operator.push_back(ptr->value);
         } else if (ptr->type == CHAR_TOKEN) {

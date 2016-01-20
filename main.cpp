@@ -8,6 +8,7 @@
 #include <string.h>
 #include <stack>
 #include <malloc.h>
+#include <iostream>
 #include "irgen.h"
 
 using namespace std;
@@ -41,14 +42,16 @@ int main( int argc, char *argv[] )
         ptr=ptr->next;
     }
 
-    checkPunc(head);
+    //checkPunc(head);
 
+    //Keycheck(head);
     // Check whether any error occurred in the phase or not
     if(isAnyErr()){
         return 0;
     }
+    //Keycheck(head);
 
-    statement(head);
+    //statement(head);
 
 
     return 0;

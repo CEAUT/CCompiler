@@ -26,15 +26,17 @@ struct number{
     number *next;
 };
 
-#define TYPE_INT 1100
-#define TYPE_BOOL 1101
-#define TYPE_CHAR 1102
-#define TYPE_FLOAT 1103
+#define TYPE_NOT_DECLARE 1100
+#define TYPE_INT 1101
+#define TYPE_BOOL 1102
+#define TYPE_CHAR 1103
+#define TYPE_FLOAT 1104
 
 extern variable *headOfVariable;
 extern variable *lastOfVariable;
 extern int numOfVariable;
 
+int getType(char *name);
 char *getId(char *name);          // Returns the id of a variable
 void newInt(char *name, int lineNum, char *file);
 void newFloat(char *name, int lineNum, char *file);

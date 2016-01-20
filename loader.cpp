@@ -127,18 +127,22 @@ token *loadfromfile(char *path)
                 pushToken(tok,&head,&last,&srcDef,&destDef);
                 strcpy(tok.value, "");
             }
+            lastType = UNKNOWN_TOKEN;
         }else if((getType(chr) == OPERATOR_TOKEN) && (lastType == NAME_TOKEN)){
             tok.type = lastType;
             pushToken(tok,&head,&last,&srcDef,&destDef);
             strcpy(tok.value,"");
             lastType = OPERATOR_TOKEN;
             pushToStr(tok.value,chr);
-        }else if((lastType == OPERATOR_TOKEN) && (getType(chr) == NUM_TOKEN)) {
+        }else if((getType(chr) == NUM_TOKEN) && (lastType == OPERATOR_TOKEN)) {
             tok.type = lastType;
             pushToken(tok, &head, &last, &srcDef, &destDef);
             strcpy(tok.value, "");
             lastType = NUM_TOKEN;
             pushToStr(tok.value, chr);
+        }else if((getType(chr) == NUM_TOKEN) && (lastType == UNKNOWN_TOKEN)) {
+            pushToStr(tok.value,chr);
+            lastType = NUM_TOKEN;
         }else if((getType(chr) == NAME_TOKEN) && (lastType == PUNC_TOKEN)){
             if (strlen(tok.value) != 0){
                 tok.type = lastType;
@@ -343,6 +347,8 @@ int idOrKeyword(char *value)
     }else if(strcmp(value,"while") == 0){
         return KEYWORD_TOKEN;
     }else if(strcmp(value,"if") == 0){
+        return KEYWORD_TOKEN;
+    }else if(strcmp(value,"else") == 0){
         return KEYWORD_TOKEN;
     }else if(strcmp(value,"main") == 0){
         return KEYWORD_TOKEN;
