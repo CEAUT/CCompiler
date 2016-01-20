@@ -19,6 +19,42 @@ char *getNewLable()
     return res;
 }
 
+token *whiilestatement(token *head)
+{
+    using namespace std;
+
+    char *lable1 = getNewLable();
+    printf("%s:\n",lable1);
+
+    head = head->next;     // It shoud be (
+    stack<int > exp;
+    exp.push(PUNC_PARAN_OP);
+
+    head = head->next;     // It shoud be something after (
+    token *headOfExp = head;
+    do{
+        if(strcmp(head->next->value,"(") == 0) {
+            exp.push(PUNC_PARAN_OP);
+        }else if (strcmp(head->next->value,")") == 0){
+            exp.pop();
+        }
+        head = head->next;
+    }while (exp.size() != 0);
+    char *condition = expressionCal(headOfExp,head);
+    char *lable2 = getNewLable();
+    char *lable3 = getNewLable();
+    printf("IF %s GOTO %s ELSE %s\n",condition,lable2,lable3);
+    printf("%s:\n",lable2);
+    head = head->next;      // head points to (
+    head = head->next;      // head points to something after (
+    head = statement(head);
+    printf("GOTO %s\n",lable1);
+    printf("%s:\n",lable3);
+    token *last = getLastToken(headOfExp,head);
+    printf("last is %s\n",last->value);
+    return last;
+}
+
 token *ifStatement(char *condition,token *head)
 {
     char *lable1 = getNewLable();
@@ -171,6 +207,8 @@ token *statement(token *head)
                 ptr = ptr->next;
             }while (exp.size() != 0);
             ptr = ifStatement(expressionCal(headOfExp,ptr),ptr);
+        } else if(strcmp(ptr->value, "while") == 0){
+            ptr = whiilestatement(ptr);
         }
 
         ptr = ptr->next;

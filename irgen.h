@@ -10,8 +10,9 @@
 extern bool seenMain;
 extern int lableCounter;
 
-void assignment(char *varaibleName,token *head);
-void statement(token *head);
+token *ifStatement(char *condition,token *head);
+token *whiilestatement(token *head);
+token *statement(token *head);
 void generateIR(token *head);
 char *expressionCal(token *start, token *end);
 #endif //CCOMPILER_IRGEN_H
