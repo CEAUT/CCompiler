@@ -8,9 +8,11 @@
 #include <stack>
 #include "syntax.h"
 
+#define DEBUG_MODE
+
 bool seenMain;
 int lableCounter;
-
+FILE *irfile;
 
 char *getNewLable()
 {
@@ -46,17 +48,19 @@ token *whiilestatement(token *head)
     printf("IF %s GOTO %s ELSE %s\n",condition,lable2,lable3);
     printf("%s:\n",lable2);
     head = head->next;      // head points to (
-    head = head->next;      // head points to something after (
+    //head = head->next;      // head points to something after (
     head = statement(head);
     printf("GOTO %s\n",lable1);
     printf("%s:\n",lable3);
     token *last = getLastToken(headOfExp,head);
-    printf("last is %s\n",last->value);
+
+
     return last;
 }
 
 token *ifStatement(char *condition,token *head)
 {
+    printf("%d condition size\n",strlen(condition));
     char *lable1 = getNewLable();
     char *lable2 = getNewLable();
     printf("IF %s GOTO %s ELSE %s\n",condition,lable1,lable2);
@@ -78,12 +82,16 @@ token *ifStatement(char *condition,token *head)
     return last;
 }
 
-void mainAnalyser(token *head){
+token *mainAnalyser(token *head){
     seenMain = true;
     printf("PROCEDURE MAIN\n");
     printf("BEGIN\n");
-    statement(head);
+    token *tok = statement(head);
+
+    if(tok != NULL)
+        generateErr(tok->lineNumber,ERR_STATE_AFTER_MAIN,"","");
     printf("RETURN\n");
+    return tok;
 }
 token *statement(token *head)
 {
@@ -108,23 +116,35 @@ token *statement(token *head)
                     ptr = ptr->next;    // Now ptr points to the (
                     ptr = ptr->next;    // Now ptr points to the )
                     ptr = ptr->next;    // Now ptr points to the {
-                    mainAnalyser(ptr);
+                    ptr = mainAnalyser(ptr);
                 } else {
                     generateErr(ptr->lineNumber, ERR_TWO_MAIN, "", ptr->fileName);
                 }
 
             } else {
-                generateErr(ptr->lineNumber, ERR_NO_VOID_TYPE_ID,"",ptr->fileName);
+                generateErr(ptr->lineNumber, ERR_NO_VOID_TYPE_ID, "", ptr->fileName);
             }
 
-
+        } else if(strcmp(ptr->value,"return") == 0){
+            if(strcmp(ptr->next->value,";") == 0){
+                printf("RETURN\n");
+                ptr = ptr->next;        // ptr points to the ;
+                if((strcmp(ptr->next->value,"}") != 0) && (scope.size() != 0)){
+                    generateWar(ptr->lineNumber,WAR_AFTER_RETURN_STATEMENT,"",ptr->fileName);
+                }
+            } else{
+                generateErr(ptr->lineNumber,ERR_SEMICOLON_AFTER_RETURN,"",ptr->fileName);
+                while(strcmp(ptr->value,";") != 0)
+                    ptr = ptr->next;
+            }
         } else if (strcmp(ptr->value, "int") == 0) {
 
             ptr = ptr->next;
             newInt(ptr->value, ptr->lineNumber, ptr->fileName);
             char *id = getId(ptr->value);
-            ptr = ptr->next;
-            if (strcmp(ptr->value, "=") == 0) {
+            if (strcmp(ptr->next->value, "=") == 0) {
+                setValue(ptr->value,ptr->lineNumber);
+                ptr = ptr->next;
                 token *headOfExp = ptr->next;
                 while (strcmp(ptr->next->value, ";") != 0) {
                     ptr = ptr->next;
@@ -139,8 +159,9 @@ token *statement(token *head)
             ptr = ptr->next;
             newFloat(ptr->value, ptr->lineNumber, ptr->fileName);
             char *id = getId(ptr->value);
-            ptr = ptr->next;
-            if (strcmp(ptr->value, "=") == 0) {
+            if (strcmp(ptr->next->value, "=") == 0) {
+                setValue(ptr->value,ptr->lineNumber);
+                ptr = ptr->next;
                 token *headOfExp = ptr->next;
                 while (strcmp(ptr->next->value, ";") != 0) {
                     ptr = ptr->next;
@@ -154,11 +175,12 @@ token *statement(token *head)
 
             ptr = ptr->next;
             newBool(ptr->value, ptr->lineNumber, ptr->fileName);
-            ptr = ptr->next;
             char *id = getId(ptr->value);
             if (strcmp(ptr->next->value, "=") == 0) {
-                token *headOfExp = ptr->next->next;
-                while (strcmp(ptr->next->next->value, ";") != 0) {
+                setValue(ptr->value,ptr->lineNumber);
+                ptr = ptr->next;
+                token *headOfExp = ptr->next;
+                while (strcmp(ptr->next->value, ";") != 0) {
                     ptr = ptr->next;
                 }
                 printf("%s := %s\n", id ,expressionCal(headOfExp, ptr));
@@ -168,37 +190,103 @@ token *statement(token *head)
 
         } else if (strcmp(ptr->value, "char") == 0) {
             ptr = ptr->next;
-            newInt(ptr->value, ptr->lineNumber, ptr->fileName);
+            newChar(ptr->value, ptr->lineNumber, ptr->fileName);
+            char *idname = (char *)malloc(IDENTIFIER_NAME_LEN_LIM * sizeof(char));
+            strcpy(idname, ptr->value);
             ptr = ptr->next;
             if (strcmp(ptr->value, "=") == 0) {
                 if (ptr->next->type == CHAR_TOKEN) {
+                    printf("%s := %s\n",getId(idname),newNumber(ptr->next->value));
+                    setValue(idname,ptr->lineNumber);
+                }else if(ptr->next->type == NUM_TOKEN){
+                    generateErr(ptr->lineNumber,ERR_TYPE_MISSMATCH_INT_TO_CHAR,"",ptr->fileName);
+                }else if(ptr->next->type == IDENTIFIER_TOKEN){
 
+                    if(getType(ptr->next->value) == TYPE_CHAR){
+                        if(hasValue(ptr->next->value)) {
+                            printf("%s := %s\n", getId(idname), getId(ptr->next->value));
+                            setValue(idname, ptr->lineNumber);
+                        } else{
+                            generateErr(ptr->lineNumber,ERR_NOT_INIT_VAR,ptr->next->value,ptr->next->fileName);
+                        }
+                    } else{
+                        generateErr(ptr->lineNumber,ERR_TYPE_MISSMATCH_INT_TO_CHAR,"",ptr->fileName);
+                    }
                 }
             } else if (strcmp(ptr->value, ";") != 0) {
                 // an error could be generated
             }
         }else if(ptr->type == IDENTIFIER_TOKEN){
-            char *id = getId(ptr->value);
-            if(strcmp(ptr->next->value,"=") == 0) {
-                setValue(ptr->value, ptr->lineNumber);
-                ptr = ptr->next;        // ptr points to the =
-                ptr = ptr->next;        // ptr points to the after =
-                token *head = ptr;
-                while (strcmp(ptr->next->value, ";") != 0) {
-                    ptr = ptr->next;
-                }
-                printf("%s := %s\n", id ,expressionCal(head, ptr));
-            } else{
 
+
+
+            if (strcmp(ptr->next->value, "=") == 0) {
+
+                char *id = (char *)malloc(IDENTIFIER_NAME_LEN_LIM * sizeof(char));
+
+                if((getType(ptr->value) == TYPE_INT) || (getType(ptr->value) == TYPE_FLOAT) ||
+                   (getType(ptr->value) == TYPE_BOOL)) {
+                    strcpy(id, getId(ptr->value));
+                    setValue(ptr->value, ptr->lineNumber);
+                    ptr = ptr->next;        // ptr points to the =
+                    ptr = ptr->next;        // ptr points to the after =
+                    token *head = ptr;
+                    while (strcmp(ptr->next->value, ";") != 0) {
+                        ptr = ptr->next;
+                    }
+                    printf("%s := %s\n", id, expressionCal(head, ptr));
+                } else if(getType(ptr->value) == TYPE_NOT_DECLARE){
+                    strcpy(id, ptr->value);
+                    generateErr(ptr->lineNumber,ERR_NOT_DEF_VAR,ptr->value,ptr->fileName);
+                    ptr = ptr->next;        // ptr points to the =
+                    ptr = ptr->next;        // ptr points to the after =
+                    token *head = ptr;
+                    while (strcmp(ptr->next->value, ";") != 0) {
+                        ptr = ptr->next;
+                    }
+                    printf("%s := %s\n", id, expressionCal(head, ptr));
+
+                } else if (getType(ptr->value) == TYPE_CHAR){
+
+                    char *idname = (char *)malloc(IDENTIFIER_NAME_LEN_LIM * sizeof(char));
+                    strcpy(idname, ptr->value);
+                    ptr = ptr->next;
+                    if (strcmp(ptr->value, "=") == 0) {
+                        if (ptr->next->type == CHAR_TOKEN) {
+                            printf("%s := %s\n",getId(idname),newNumber(ptr->next->value));
+                            setValue(idname,ptr->lineNumber);
+                        }else if(ptr->next->type == NUM_TOKEN){
+                            generateErr(ptr->lineNumber,ERR_TYPE_MISSMATCH_INT_TO_CHAR,"",ptr->fileName);
+                        }else if(ptr->next->type == IDENTIFIER_TOKEN){
+
+                            if(getType(ptr->next->value) == TYPE_CHAR){
+                                if(hasValue(ptr->next->value)) {
+                                    printf("%s := %s\n", getId(idname), getId(ptr->next->value));
+                                    setValue(idname, ptr->lineNumber);
+                                } else{
+                                    generateErr(ptr->lineNumber,ERR_NOT_INIT_VAR,ptr->next->value,ptr->next->fileName);
+                                }
+                            } else{
+                                generateErr(ptr->lineNumber,ERR_TYPE_MISSMATCH_INT_TO_CHAR,"",ptr->fileName);
+                            }
+                        }
+                    } else if (strcmp(ptr->value, ";") != 0) {
+                        // an error could be generated
+                    }
+
+                }
+            }else{
+                //  Todo some additional error checking
             }
+
         } else if (strcmp(ptr->value, "if") == 0){
             ptr = ptr->next;     // It shoud be (
             stack<int > exp;
             exp.push(PUNC_PARAN_OP);
 
-            ptr = ptr->next;     // It shoud be something after (
             token *headOfExp = ptr;
             do{
+                ptr = ptr->next;     // It shoud be something after (
                 if(strcmp(ptr->next->value,"(") == 0) {
                     exp.push(PUNC_PARAN_OP);
                 }else if (strcmp(ptr->next->value,")") == 0){
@@ -206,19 +294,31 @@ token *statement(token *head)
                 }
                 ptr = ptr->next;
             }while (exp.size() != 0);
+            printf("log : %s\n",headOfExp->value);
+            headOfExp = headOfExp->next;
+            ptr = getLastToken(headOfExp,ptr);
             ptr = ifStatement(expressionCal(headOfExp,ptr),ptr);
+
         } else if(strcmp(ptr->value, "while") == 0){
             ptr = whiilestatement(ptr);
         }
-
+        if (ptr == NULL)
+            return NULL;
         ptr = ptr->next;
-    }while(scope.size() != 0);
+    }while((scope.size() != 0) && (ptr != NULL) );
 
     return ptr;
 }
 void generateIR(token *head)
 {
     seenMain = false;
+    token *ptr = head;
+
+    while (ptr != NULL)
+    {
+        ptr = statement(ptr);
+    }
+
 }
 char *expressionCal(token *start, token *end) {
     using namespace std;
@@ -282,7 +382,7 @@ char *expressionCal(token *start, token *end) {
         } else if (ptr->type == OPERATOR_TOKEN) {
             _operator.push_back(ptr->value);
         } else if (ptr->type == CHAR_TOKEN) {
-            ;
+            _operand.push_back(newNumber(ptr->value));
         } else if (ptr->type == KEYWORD_TOKEN){
             if(strcmp(ptr->value,"min") == 0){
                 //  To do the min calculation expressions
