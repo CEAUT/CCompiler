@@ -12,6 +12,8 @@ Extra features implemented those weren't mentioned in the project explanation :
     -   If with scope or without scope
     -   while with scope or without scope
     -   Repeated number has the same id
+    -   Warning for the statements that came after the return statement with the smart algorithm
+    -   Support else if structure
 
 
 These items should be mentioned :

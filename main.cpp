@@ -24,6 +24,7 @@ int main( int argc, char *argv[] )
 
     if(argc <= 1){
         printf("Enter the file path to compile : \n");
+
         char *path = (char *)malloc(1000 * sizeof(char));
         scanf("%s",path);
         preProces(pre,argv[1]);
@@ -33,26 +34,33 @@ int main( int argc, char *argv[] )
 
     fclose(pre);
 
+    printf("Pre process step completed.\n");
+
+
     head = loadfromfile("/home/ahmad/ClionProjects/export.c");
     token *ptr = head;
-
+/*
     while (ptr != NULL)
     {
         printf("%d : %s s:%d\n",ptr->lineNumber,ptr->value,ptr->type);
         ptr=ptr->next;
     }
+*/
+    printf("Preprocess completed.\n");
+    checkPunc(head);
 
-    //checkPunc(head);
+    Tcheck(head,'}');
 
-    //Keycheck(head);
     // Check whether any error occurred in the phase or not
     if(isAnyErr()){
+        generateIR(head,"/home/ahmad/ClionProjects/file.ir");
         return 0;
     }
     //Keycheck(head);
 
-    //statement(head);
 
+    //statement(head);
+    //mainAnalyser(head);
 
     return 0;
 }

@@ -8,7 +8,6 @@
 #include <stack>
 #include "syntax.h"
 
-#define DEBUG_MODE
 
 bool seenMain;
 int lableCounter;
@@ -26,8 +25,11 @@ token *whiilestatement(token *head)
     using namespace std;
 
     char *lable1 = getNewLable();
+#ifdef DEBUG_MODE
     printf("%s:\n",lable1);
-
+#else
+    fprintf(irfile,"%s:\n",lable1);
+#endif
     head = head->next;     // It shoud be (
     stack<int > exp;
     exp.push(PUNC_PARAN_OP);
@@ -45,13 +47,23 @@ token *whiilestatement(token *head)
     char *condition = expressionCal(headOfExp,head);
     char *lable2 = getNewLable();
     char *lable3 = getNewLable();
+#ifdef DEBUG_MODE
     printf("IF %s GOTO %s ELSE %s\n",condition,lable2,lable3);
     printf("%s:\n",lable2);
+#else
+    fprintf(irfile,"IF %s GOTO %s ELSE %s\n",condition,lable2,lable3);
+    fprintf(irfile,"%s:\n",lable2);
+#endif
     head = head->next;      // head points to (
     //head = head->next;      // head points to something after (
     head = statement(head);
+#ifdef DEBUG_MODE
     printf("GOTO %s\n",lable1);
     printf("%s:\n",lable3);
+#else
+    fprintf(irfile,"GOTO %s\n",lable1);
+    fprintf(irfile,"%s:\n",lable3);
+#endif
     token *last = getLastToken(headOfExp,head);
 
 
@@ -60,23 +72,40 @@ token *whiilestatement(token *head)
 
 token *ifStatement(char *condition,token *head)
 {
-    printf("%d condition size\n",strlen(condition));
     char *lable1 = getNewLable();
     char *lable2 = getNewLable();
+#ifdef DEBUG_MODE
     printf("IF %s GOTO %s ELSE %s\n",condition,lable1,lable2);
     printf("%s:\n",lable1);
-
+#else
+    fprintf(irfile,"IF %s GOTO %s ELSE %s\n",condition,lable1,lable2);
+    fprintf(irfile,"%s:\n",lable1);
+#endif
+    head = head->next;
     head = head->next;
     token *last = statement(head);
     if(strcmp(last->value,"else") == 0){
         char *lable3 = getNewLable();
+#ifdef DEBUG_MODE
         printf("GOTO %s:\n",lable3);
         printf("%s:\n",lable2);
+#else
+        fprintf(irfile,"GOTO %s:\n",lable3);
+        fprintf(irfile,"%s:\n",lable2);
+#endif
         last = last->next;      // last points to something other than else
         last = statement(last);
+#ifdef DEBUG_MODE
         printf("%s:\n",lable3);
+#else
+        fprintf(irfile,"%s:\n",lable3);
+#endif
     } else {
-        printf("%s:\n", lable2);
+#ifdef DEBUG_MODE
+        printf("%s:\n",lable2);
+#else
+        fprintf(irfile,"%s:\n",lable2);
+#endif
     }
     last = getLastToken(head,last);
     return last;
@@ -84,13 +113,22 @@ token *ifStatement(char *condition,token *head)
 
 token *mainAnalyser(token *head){
     seenMain = true;
+#ifdef DEBUG_MODE
     printf("PROCEDURE MAIN\n");
     printf("BEGIN\n");
+#else
+    fprintf(irfile,"PROCEDURE MAIN\n");
+    fprintf(irfile,"BEGIN\n");
+#endif
     token *tok = statement(head);
 
     if(tok != NULL)
         generateErr(tok->lineNumber,ERR_STATE_AFTER_MAIN,"","");
+#ifdef DEBUG_MODE
     printf("RETURN\n");
+#else
+    fprintf(irfile,"RETURN\n");
+#endif
     return tok;
 }
 token *statement(token *head)
@@ -127,7 +165,11 @@ token *statement(token *head)
 
         } else if(strcmp(ptr->value,"return") == 0){
             if(strcmp(ptr->next->value,";") == 0){
+#ifdef DEBUG_MODE
                 printf("RETURN\n");
+#else
+                fprintf(irfile,"RETURN\n");
+#endif
                 ptr = ptr->next;        // ptr points to the ;
                 if((strcmp(ptr->next->value,"}") != 0) && (scope.size() != 0)){
                     generateWar(ptr->lineNumber,WAR_AFTER_RETURN_STATEMENT,"",ptr->fileName);
@@ -149,7 +191,11 @@ token *statement(token *head)
                 while (strcmp(ptr->next->value, ";") != 0) {
                     ptr = ptr->next;
                 }
+#ifdef DEBUG_MODE
                 printf("%s := %s\n", id ,expressionCal(headOfExp, ptr));
+#else
+                fprintf(irfile,"%s := %s\n", id ,expressionCal(headOfExp, ptr));
+#endif
             } else if (strcmp(ptr->value, ";") != 0) {
                 // an error could be generated
             }
@@ -166,7 +212,11 @@ token *statement(token *head)
                 while (strcmp(ptr->next->value, ";") != 0) {
                     ptr = ptr->next;
                 }
+#ifdef DEBUG_MODE
                 printf("%s := %s\n", id ,expressionCal(headOfExp, ptr));
+#else
+                fprintf(irfile,"%s := %s\n", id ,expressionCal(headOfExp, ptr));
+#endif
             } else if (strcmp(ptr->value, ";") != 0) {
                 // an error could be generated
             }
@@ -183,7 +233,11 @@ token *statement(token *head)
                 while (strcmp(ptr->next->value, ";") != 0) {
                     ptr = ptr->next;
                 }
+#ifdef DEBUG_MODE
                 printf("%s := %s\n", id ,expressionCal(headOfExp, ptr));
+#else
+                fprintf(irfile,"%s := %s\n", id ,expressionCal(headOfExp, ptr));
+#endif
             } else if (strcmp(ptr->value, ";") != 0) {
                 // an error could be generated
             }
@@ -204,7 +258,11 @@ token *statement(token *head)
 
                     if(getType(ptr->next->value) == TYPE_CHAR){
                         if(hasValue(ptr->next->value)) {
+#ifdef DEBUG_MODE
                             printf("%s := %s\n", getId(idname), getId(ptr->next->value));
+#else
+                            fprintf(irfile,"%s := %s\n", getId(idname), getId(ptr->next->value));
+#endif
                             setValue(idname, ptr->lineNumber);
                         } else{
                             generateErr(ptr->lineNumber,ERR_NOT_INIT_VAR,ptr->next->value,ptr->next->fileName);
@@ -234,7 +292,11 @@ token *statement(token *head)
                     while (strcmp(ptr->next->value, ";") != 0) {
                         ptr = ptr->next;
                     }
+#ifdef DEBUG_MODE
                     printf("%s := %s\n", id, expressionCal(head, ptr));
+#else
+                    fprintf(irfile,"%s := %s\n", id, expressionCal(head, ptr));
+#endif
                 } else if(getType(ptr->value) == TYPE_NOT_DECLARE){
                     strcpy(id, ptr->value);
                     generateErr(ptr->lineNumber,ERR_NOT_DEF_VAR,ptr->value,ptr->fileName);
@@ -244,7 +306,11 @@ token *statement(token *head)
                     while (strcmp(ptr->next->value, ";") != 0) {
                         ptr = ptr->next;
                     }
+#ifdef DEBUG_MODE
                     printf("%s := %s\n", id, expressionCal(head, ptr));
+#else
+                    fprintf(irfile,"%s := %s\n", id, expressionCal(head, ptr));
+#endif
 
                 } else if (getType(ptr->value) == TYPE_CHAR){
 
@@ -253,7 +319,11 @@ token *statement(token *head)
                     ptr = ptr->next;
                     if (strcmp(ptr->value, "=") == 0) {
                         if (ptr->next->type == CHAR_TOKEN) {
+#ifdef DEBUG_MODE
                             printf("%s := %s\n",getId(idname),newNumber(ptr->next->value));
+#else
+                            fprintf(irfile,"%s := %s\n",getId(idname),newNumber(ptr->next->value));
+#endif
                             setValue(idname,ptr->lineNumber);
                         }else if(ptr->next->type == NUM_TOKEN){
                             generateErr(ptr->lineNumber,ERR_TYPE_MISSMATCH_INT_TO_CHAR,"",ptr->fileName);
@@ -261,7 +331,11 @@ token *statement(token *head)
 
                             if(getType(ptr->next->value) == TYPE_CHAR){
                                 if(hasValue(ptr->next->value)) {
+#ifdef DEBUG_MODE
                                     printf("%s := %s\n", getId(idname), getId(ptr->next->value));
+#else
+                                    fprintf(irfile,"%s := %s\n", getId(idname), getId(ptr->next->value));
+#endif
                                     setValue(idname, ptr->lineNumber);
                                 } else{
                                     generateErr(ptr->lineNumber,ERR_NOT_INIT_VAR,ptr->next->value,ptr->next->fileName);
@@ -294,7 +368,7 @@ token *statement(token *head)
                 }
                 ptr = ptr->next;
             }while (exp.size() != 0);
-            printf("log : %s\n",headOfExp->value);
+
             headOfExp = headOfExp->next;
             ptr = getLastToken(headOfExp,ptr);
             ptr = ifStatement(expressionCal(headOfExp,ptr),ptr);
@@ -309,8 +383,9 @@ token *statement(token *head)
 
     return ptr;
 }
-void generateIR(token *head)
+void generateIR(token *head,char *path)
 {
+    irfile = fopen(path,"w");
     seenMain = false;
     token *ptr = head;
 
@@ -318,6 +393,7 @@ void generateIR(token *head)
     {
         ptr = statement(ptr);
     }
+    fclose(irfile);
 
 }
 char *expressionCal(token *start, token *end) {
@@ -380,14 +456,22 @@ char *expressionCal(token *start, token *end) {
                 _operand.push_back(ptr->value);
             }
         } else if (ptr->type == OPERATOR_TOKEN) {
+            if(!valideOperator(ptr->value))
+                generateErr(ptr->lineNumber,ERR_OPERATOR_NOT_OVERLODED,ptr->value,ptr->fileName);
             _operator.push_back(ptr->value);
         } else if (ptr->type == CHAR_TOKEN) {
             _operand.push_back(newNumber(ptr->value));
         } else if (ptr->type == KEYWORD_TOKEN){
-            if(strcmp(ptr->value,"min") == 0){
-                //  To do the min calculation expressions
+            if(strcmp(ptr->value,"true") == 0) {
+                _operand.push_back(newNumber("1"));
+            }else if(strcmp(ptr->value,"false") == 0) {
+                _operand.push_back(newNumber("0"));
+            }else if(strcmp(ptr->value,"NULL") == 0) {
+                _operand.push_back(newNumber("0"));
+            }else if(strcmp(ptr->value,"min") == 0){
+                //  Todo the min calculation expressions
             }else if(strcmp(ptr->value,"max") == 0){
-                //  To do the max calculation expressions
+                //  Todo the max calculation expressions
             }
         }
         ptr = ptr->next;
@@ -403,7 +487,11 @@ char *expressionCal(token *start, token *end) {
         if((strcmp(_operator[i],"*") == 0) ||
            (strcmp(_operator[i],"/") == 0)){
             tempMem = newTempMem();
+#ifdef DEBUG_MODE
             printf("%s := %s %s %s\n",tempMem,_operand[i],_operator[i],_operand[i+1]);
+#else
+            fprintf(irfile,"%s := %s %s %s\n",tempMem,_operand[i],_operator[i],_operand[i+1]);
+#endif
             strcpy(_operand[i],tempMem);
             _operand.erase(_operand.begin() + (i + 1));
             _operator.erase(_operator.begin() + i);
@@ -417,7 +505,11 @@ char *expressionCal(token *start, token *end) {
         if((strcmp(_operator[i],"+") == 0) ||
            (strcmp(_operator[i],"-") == 0)){
             tempMem = newTempMem();
+#ifdef DEBUG_MODE
             printf("%s := %s %s %s\n",tempMem,_operand[i],_operator[i],_operand[i+1]);
+#else
+            fprintf(irfile,"%s := %s %s %s\n",tempMem,_operand[i],_operator[i],_operand[i+1]);
+#endif
             strcpy(_operand[i],tempMem);
             _operand.erase(_operand.begin() + (i + 1));
             _operator.erase(_operator.begin() + i);
@@ -433,7 +525,11 @@ char *expressionCal(token *start, token *end) {
            (strcmp(_operator[i],"<") == 0) ||
            (strcmp(_operator[i],">") == 0)){
             tempMem = newTempMem();
+#ifdef DEBUG_MODE
             printf("%s := %s %s %s\n",tempMem,_operand[i],_operator[i],_operand[i+1]);
+#else
+            fprintf(irfile,"%s := %s %s %s\n",tempMem,_operand[i],_operator[i],_operand[i+1]);
+#endif
             strcpy(_operand[i],tempMem);
             _operand.erase(_operand.begin() + (i + 1));
             _operator.erase(_operator.begin() + i);
@@ -446,7 +542,11 @@ char *expressionCal(token *start, token *end) {
         if((strcmp(_operator[i],"==") == 0) ||
            (strcmp(_operator[i],"!=") == 0)){
             tempMem = newTempMem();
+#ifdef DEBUG_MODE
             printf("%s := %s %s %s\n",tempMem,_operand[i],_operator[i],_operand[i+1]);
+#else
+            fprintf(irfile,"%s := %s %s %s\n",tempMem,_operand[i],_operator[i],_operand[i+1]);
+#endif
             strcpy(_operand[i],tempMem);
             _operand.erase(_operand.begin() + (i + 1));
             _operator.erase(_operator.begin() + i);
@@ -458,7 +558,11 @@ char *expressionCal(token *start, token *end) {
     for (int i = 0; i < _operator.size(); ++i) {
         if((strcmp(_operator[i],"&&") == 0)){
             tempMem = newTempMem();
+#ifdef DEBUG_MODE
             printf("%s := %s %s %s\n",tempMem,_operand[i],_operator[i],_operand[i+1]);
+#else
+            fprintf(irfile,"%s := %s %s %s\n",tempMem,_operand[i],_operator[i],_operand[i+1]);
+#endif
             strcpy(_operand[i],tempMem);
             _operand.erase(_operand.begin() + (i + 1));
             _operator.erase(_operator.begin() + i);
@@ -470,7 +574,11 @@ char *expressionCal(token *start, token *end) {
     for (int i = 0; i < _operator.size(); ++i) {
         if((strcmp(_operator[i],"||") == 0)){
             tempMem = newTempMem();
+#ifdef DEBUG_MODE
             printf("%s := %s %s %s\n",tempMem,_operand[i],_operator[i],_operand[i+1]);
+#else
+            fprintf(irfile,"%s := %s %s %s\n",tempMem,_operand[i],_operator[i],_operand[i+1]);
+#endif
             strcpy(_operand[i],tempMem);
             _operand.erase(_operand.begin() + (i + 1));
             _operator.erase(_operator.begin() + i);
@@ -482,7 +590,11 @@ char *expressionCal(token *start, token *end) {
     for (int i = 0; i < _operator.size(); ++i) {
         if((strcmp(_operator[i],"=") == 0)){
             tempMem = newTempMem();
+#ifdef DEBUG_MODE
             printf("%s := %s %s %s\n",tempMem,_operand[i],_operator[i],_operand[i+1]);
+#else
+            fprintf(irfile,"%s := %s %s %s\n",tempMem,_operand[i],_operator[i],_operand[i+1]);
+#endif
             strcpy(_operand[i],tempMem);
             _operand.erase(_operand.begin() + (i + 1));
             _operator.erase(_operator.begin() + i);
@@ -491,4 +603,38 @@ char *expressionCal(token *start, token *end) {
     }
 
     return tempMem;
+}
+
+bool valideOperator(char *opr)
+{
+    if (strcmp(opr,"+") == 0){
+        return true;
+    } else if (strcmp(opr,"-") == 0){
+        return true;
+    }else if (strcmp(opr,"*") == 0){
+        return true;
+    }else if (strcmp(opr,"/") == 0){
+        return true;
+    }else if (strcmp(opr,"&&") == 0){
+        return true;
+    }else if (strcmp(opr,"||") == 0){
+        return true;
+    } else if (strcmp(opr,"!=") == 0){
+        return true;
+    }else if (strcmp(opr,"==") == 0){
+        return true;
+    }else if (strcmp(opr,"<") == 0){
+        return true;
+    }else if (strcmp(opr,">") == 0){
+        return true;
+    }else if (strcmp(opr,"<=") == 0){
+        return true;
+    }else if (strcmp(opr,">=") == 0){
+        return true;
+    }else if (strcmp(opr,"%") == 0){
+        return true;
+    } else{
+        return false;
+    }
+
 }

@@ -10,60 +10,176 @@
 #include <string.h>
 
 
-int Emain;
+
+void Pcheck_m(token * node,char To)
+{
+    while((node->value[0]!=To)&&(node!=NULL))
+    {
+        if(node->value[0]=='(')
+        {
+            if (node->next->value[0]=='(')
+                node=node->next;
+            else if(node->next->type==2)
+                node=node->next;
+            else if(node->next->type==4)
+                node=node->next;
+            else
+            {
+                generateErr(node->next->lineNumber,ERR_AFTER_PARENTHESIS_OPEN,"",node->fileName);
+                return;
+            }
+        }
+        else if(node->value[0]==')')
+        {
+
+            if (node->next->value[0]==')')
+                node=node->next;
+            else if(node->next->type==3)
+                node=node->next;
+            else if (node->next->value[0]==To)
+                node=node->next;
+            else
+            {
+                generateErr(node->next->lineNumber,ERR_AFTER_PARENTHESIS_CLOSE,"",node->fileName);
+                return;
+            }
+        }
+        else if ((node->type==4)||(node->type==2))
+        {
+            if (node->next->type==3)
+                node=node->next;
+            else if(node->next->value[0]==To)
+                node=node->next;
+            else if(node->next->value[0]==')')
+                node=node->next;
+            else
+            {
+                printf("bad az adad ya moteghayer bayad operator bashe %d \n",node->next->lineNumber);
+                return;
+            }
+        }
+        else if (node->type==3)
+        {
+            if (node->next->value[0]=='(')
+                node=node->next;
+            else if ((node->next->type==4)||(node->next->type==2))
+                node=node->next;
+            else
+            {
+                generateErr(node->next->lineNumber,ERR_AFTER_OPR,"",node->next->fileName);
+                return;
+            }
+        }
+        else if(node->value[0]==To)
+            return;
+
+    }
+}
+
 void Pcheck(token *node,char To){
-//    if (Emain==0)
-//    {
-//        printf("ghabl az main nemishe %d \n",node->lineNumber);
-//        return;
-//    }
+    //a='a';
+    if ((node->type==4)||(node->type==2))
+    {
+        if (node->next!=NULL)
+        {
+            if (node->next->value[0]=='=')
+            {
+                if (node->next->next!=NULL)
+                if(node->next->next->type==5)
+                {
+                    if(node->next->next->next->value[0]==To)
+                        ;
+                    else{
+                        char str[2] = " ";
+                        str[0] = To;
+                        generateErr(node->next->lineNumber,ERR_REPLACE,str,node->next->fileName);
+                    }
+
+                }
+            }
+        }
+    }
+
+
+    //a=true ;
+    if ((node->type==4)||(node->type==2))
+    {
+        if (node->next!=NULL)
+        {
+            if (node->next->value[0]=='=')
+            {
+                if (node->next->next!=NULL)
+                if((strcmp(node->next->next->value,"true"))||(strcmp(node->next->next->value,"false")))
+                {
+                    if(node->next->next->next->value[0]==To)
+                        ;
+                    else {
+                        char str[2] = " ";
+                        str[0] = To;
+                        generateErr(node->next->lineNumber, ERR_REPLACE, str, node->next->fileName);
+                    }
+                }
+            }
+        }
+    }
+
+    ////ta inja check shod
+
+
+
+
     if ((node->type==4)||(node->type==2))
     {
         if ((node->type==4)&&(node->next->value[0]=='='))
-            printf("akhe adad ke nemitoone mosavie chizi bashe ke %d \n",node->next->lineNumber);
+            generateErr(node->next->lineNumber,ERR_ASSIGN_TO_NUMBER,"",node->next->fileName);
+        if (node->next!=NULL)
+        {
+            if(node->next->next!=NULL)
+            {
+                if((node->next->value[0]=='=')&&(strcmp(node->next->next->value,"NULL")==0))
+                {
+                    if(node->next->next->next!=NULL)
+                    {
+                        if(node->next->next->next->value[0]==To)
+                            ;
+                        else {
+                            char str[2] = " ";
+                            str[0] = To;
+                            generateErr(node->next->next->next->lineNumber,ERR_AFTER_NULL,str,node->next->next->next->fileName);
+                        }
+                    }
+                }
+                else if((node->next->type==3)&&(node->next->value[0]!='=')&&(strcmp(node->next->next->value,"NULL")==0))
+                    generateErr(node->next->next->lineNumber,ERR_NULL_NOT_OPERATABLE,"",node->next->next->fileName);
+            }
+        }
+        /////////////////////
+
+        if(node->next->value[0]=='(')
+            Pcheck_m(node->next,To);
 
         else if (node->next->type==3)
         {
-            if ((node->next->next->type==2)||(node->next->next->type==4))
-            {
-                if(node->next->next->next->value[0]==To)
-                    ;
-                else
-                    printf("Naresid be tahesh %d \n",node->next->next->lineNumber);
-            }
-            else if((strcmp(node->next->next->value,"NULL")==0)&&(node->next->value[0]=='='))
-            {
-                if(node->next->next->next->value[0]==To)
-                    ;
-                else
-                    printf("After NULL should be %c %d \n",To,node->next->next->next->lineNumber);
-
-            }
-            else if((strcmp(node->next->next->value,"NULL")==0)&&(node->next->value[0]!='=')&&(node->next->type==3))
-                printf("NULL ba chizi jam nemishe%d \n",node->next->next->lineNumber);
-
-            else
-                printf("after an operator you should use an id or a num %d \n",node->next->lineNumber);
+            Pcheck_m(node->next,To);
         }
 
 
-
-
-
-
-
-        else if ((node->next->value[0]==To)||(node->next->value[1]==To))
+        else if (node->next->value[0]==To)
             ;
 
-
-        else
-            printf("Ya bayad operator bezari ya %c %d\n",To,node->next->lineNumber);
-
+        else {
+            char str[2] = " ";
+            str[0] = To;
+            generateErr(node->next->lineNumber,ERR_OPERATOR_OR_,str,node->next->fileName);
+        }
         return;
 
     }
+    else if(node->value[0]=='(')
+        Pcheck_m(node,To);
+
     else
-        printf("inja bayas ya moteghayer bashe ya adad %d\n",node->lineNumber);
+        generateErr(node->lineNumber,ERR_ID_OR_NUM,"",node->fileName);
 
 }
 
@@ -83,15 +199,38 @@ void Keycheck(token * node)
 
         }
         else
-            printf("Bad az if ( yadet rafte %d \n",node->lineNumber);
+            generateErr(node->lineNumber,ERR_AFTER_IF_OR_WHILE_PARENTHESIS_OPEN,"IF",node->fileName);
     }
+
+        //////////////////////////////////////////////////
+
+
+    else if (strcmp(node->value,"while")==0)
+    {
+        if(node->next->value[0]=='(')
+        {
+            Pcheck(node->next->next, ')');
+            while(node->value[0]!='{')
+                node=node->next;
+            //node->value======='{'
+            Tcheck(node, '}');
+
+        }
+
+        else
+            generateErr(node->lineNumber,ERR_AFTER_IF_OR_WHILE_PARENTHESIS_OPEN,"WHILE",node->fileName);
+    }
+
+
+
+
         ////////////////////////////////////////////////
     else if (strcmp(node->value,"else")==0)
     {
         if(node->next->value[0]=='{')
             Tcheck(node->next, '}');
         else
-            printf("bad az else yadet rafte { bezari %d \n",node->lineNumber);
+            generateErr(node->lineNumber,ERR_AFTER_ELSE_BRACE_OPEN,"",node->fileName);
     }
         ////////////////////////////////////////////////
     else if (strcmp(node->value,"int")==0)
@@ -100,19 +239,15 @@ void Keycheck(token * node)
         {
             if (node->next->next->value[0]=='=')
             {
-                int a=Emain;
-                Emain=1;
                 Pcheck(node->next->next->next,';');
-                Emain=a;
-
             }
             else if (node->next->next->value[0]==';')
                 ;
             else
-                printf("inja bayas = ya ; bashe %d \n",node->next->lineNumber);
+                generateErr(node->next->lineNumber,ERR_ASSIGN_OR_SEMICOLON,"",node->next->fileName);
         }
         else
-            printf("bayad motaghayer tarif koni %d \n",node->next->lineNumber);
+            generateErr(node->next->lineNumber,ERR_SHOULD_DECLARE_ID,"",node->next->fileName);
         return;
     }
         /////////////////////////////////////////////////
@@ -122,21 +257,21 @@ void Keycheck(token * node)
         {
             if (node->next->next->value[0]=='=')
             {
-                if ((strcmp(node->next->next->next->value,"true")==0)||(strcmp(node->next->next->next->value,"false")==0))
+                if ((strcmp(node->next->next->next->value,"true")==0)||(strcmp(node->next->next->next->value,"false")==0)||(node->next->next->next->type==2))
                 {
                     if (node->next->next->next->next->value[0]==';')
                         ;
                     else
-                        printf("inja bayas ; bezari %d \n",node->next->next->next->lineNumber);
+                        generateErr(node->next->next->next->lineNumber,ERR_SEMICOLON_NEEDED,"",node->next->next->next->fileName);
                 }
                 else
-                    printf("bool nemitoone joz true o false bashe %d \n",node->next->next->next->lineNumber);
+                    generateErr(node->next->next->next->lineNumber,ERR_BOOL_TYPE_MISMATCH,"",node->next->next->next->fileName);
             }
             else
-                printf("inja bayas = bashe %d \n",node->next->lineNumber);
+                generateErr(node->next->lineNumber,ERR_ASSIGNMENT_EXPECTED,"",node->next->fileName);
         }
         else
-            printf("bayad motaghayer tarif koni %d \n",node->next->lineNumber);
+            generateErr(node->next->lineNumber,ERR_SHOULD_DECLARE_ID,"",node->next->fileName);
         return;
     }
         /////////////////////////////////////////////////
@@ -148,38 +283,33 @@ void Keycheck(token * node)
         {
             if (node->next->next->value[0]=='=')
             {
-                if (node->next->next->next->type==5)
+                if ((node->next->next->next->type==5)||(node->next->next->next->type==2))
                 {
                     if (node->next->next->next->next->value[0]==';')
                         ;
                     else
-                        printf("inja bayas ; bezari %d \n",node->next->next->next->lineNumber);
+                        generateErr(node->next->next->next->lineNumber,ERR_SEMICOLON_NEEDED,"",node->next->next->next->fileName);
                 }
                 else
-                    printf("char nemitoone joz 'character' bashe %d \n",node->next->next->next->lineNumber);
+                    generateErr(node->next->next->next->lineNumber,ERR_CHAR_TYPE_MISMATCH,"",node->next->next->next->fileName);
             }
             else
-                printf("inja bayas = bashe %d \n",node->next->lineNumber);
+                generateErr(node->next->lineNumber,ERR_ASSIGNMENT_EXPECTED,"",node->next->fileName);
         }
         else
-            printf("bayad motaghayer tarif koni %d \n",node->next->lineNumber);
+            generateErr(node->next->lineNumber,ERR_SHOULD_DECLARE_ID,"",node->next->fileName);
         return;
     }
         ////////////////////////////////////////////////
     else if (strcmp(node->value,"main")==0)
     {
-        if (Emain)
-        {
-            printf("ye main dashti ke %d \n",node->lineNumber);
-            return;
-        }
         if (node->next->value[0]=='(')
         {
             if (node->next->next->value[0]==')')
             {  if(node->next->next->next->value[0]=='{')
                 {
                     Tcheck(node->next->next->next, '}');
-                    Emain=1;
+
                 }
                 else
                     printf("bad az main { yadet rafte %d \n",node->next->next->lineNumber);
@@ -187,14 +317,15 @@ void Keycheck(token * node)
 
             else if (strcmp(node->next->next->value,"void")==0)
             {
-                if(node->next->next->next->value[0]==')')
-                {  if(node->next->next->next->next->value[0]=='{')
+                if(node->next->next->next->value[0]==')') {
+                    if(node->next->next->next->next->value[0]=='{')
                     {
-                        Emain=1;
                         Tcheck(node->next->next->next->next, '}');
                     }
                     else
-                        printf("bad az main { yadet rafte %d \n",node->next->next->next->lineNumber);}
+                        printf("bad az main { yadet rafte %d \n",node->next->next->next->lineNumber);
+                }
+
             }
 
             else
@@ -209,11 +340,6 @@ void Keycheck(token * node)
         /////////////////////////////////////////////////
     else if (strcmp(node->value,"void")==0)
     {
-        if (Emain)
-        {
-            printf("ye main dashti ke %d \n",node->lineNumber);
-            return;
-        }
         if (strcmp(node->next->value,"main")==0)
         {
             if (node->next->next->value[0]=='(')
@@ -221,11 +347,10 @@ void Keycheck(token * node)
                 if (node->next->next->next->value[0]==')')
                 {  if(node->next->next->next->next->value[0]=='{')
                     {
-                        Emain=1;
                         Tcheck(node->next->next->next->next, '}');
                     }
                     else
-                        printf("bad az main { yadet rafte %d \n",node->next->next->next->lineNumber);
+                        generateErr(node->next->next->next->lineNumber,ERR_MAIN_SCOPE_START,"",node->next->next->next->fileName);
                 }
 
                 else if (strcmp(node->next->next->next->value,"void")==0)
@@ -234,65 +359,110 @@ void Keycheck(token * node)
                     {
                         if(node->next->next->next->next->next->value[0]=='{')
                         {
-                            Emain=1;
                             Tcheck(node->next->next->next->next->next, '}');
                         }
                         else
-                            printf("bad az main { yadet rafte %d \n",node->next->next->next->next->lineNumber);
+                            generateErr(node->next->next->next->lineNumber,ERR_MAIN_SCOPE_START,"",node->next->next->next->fileName);
                     }
                 }
 
                 else
-                    printf("bad az ( , ya bayad void bashe ya ) %d \n",node->next->next->lineNumber);
+                    generateErr(node->next->next->lineNumber,ERR_MAIN_PARENTHESIS,"",node->next->next->fileName);
 
             }
             else
-                printf("bad az main ( yadet rafte %d \n",node->next->lineNumber);
+                generateErr(node->next->next->lineNumber,ERR_MAIN_PARENTHESIS,"",node->next->next->fileName);
         }
         else
-            printf("bad az void bayad main bashe %d \n",node->lineNumber);
+            generateErr(node->lineNumber,ERR_MAIN_AFTER_VOID,"",node->fileName);
         return;
     }
+
         //////////////////////////////////////////////////
+
+    else if (strcmp(node->value,"return")==0)
+    {
+        if (node->next->value[0]==';')
+            ;
+        else
+            generateErr(node->lineNumber,ERR_SEMICOLON_AFTER_RETURN,"",node->fileName);
+    }
+
+        /////////////////////////////////////////////////
+
     else
-        printf("inja bayad ye keyword bashe %d \n",node->lineNumber);
+        generateErr(node->lineNumber,ERR_KEYWORD_EXPECTED,"",node->fileName);
     return;
 
 }
 
-void Tcheck(token * node,char To)
+token * Tcheck(token * node,char To)
 {
     int s=0;
     int v=1;
-    while (v)
+    while (v!=0)
     {
         if (node==NULL)
             break;
         if((node->value[0]==To)&&(s==0))
-        {v=0;
-            break;
+        {
+            v=0;
+            return node;
         }
         if (node->value[0]=='{')
             s++;
         if(node->value[0]=='}')
             s--;
         if((node->value[0]==To)&&(s==0))
-        {v=0;
-            break;
+        {
+            v=0;
+            return node;
+
         }
 
+        else if ((node->type==2)&&(v!=0)){
+            if (node->next->value[0]=='=')
+                Pcheck(node->next->next, ';');
+            else
+                Pcheck(node, ';');
+
+            int x=0;
+            while(node->value[0]!=';')
+            {
+                if(node->next!=NULL) {
+                    node=node->next;
+                }
+                if(node->next==NULL) {
+                    x=1;
+                    break;
+                }
+
+            }
+            if (x==1)
+                return node;
 
 
-        else if (node->type==2){
-            Pcheck(node, ';');
-            while (node->value[0]!=';')
-                node=node->next;
+
         }
         else if(node->type==1)
         {
             int t=1;
             Keycheck(node);
             if (strcmp(node->value,"if")==0)
+            {
+                while(node->value[0]!='{')
+                    node=node->next;
+                while(t!=0)
+                {
+                    node=node->next;
+                    if(node->value[0]=='{')
+                        t++;
+                    else if(node->value[0]=='}')
+                        t--;
+                }
+            }
+
+            if (strcmp(node->value,"while")==0)
             {
                 while(node->value[0]!='{')
                     node=node->next;
@@ -327,10 +497,12 @@ void Tcheck(token * node,char To)
                 while(t!=0)
                 {
                     node=node->next;
-                    if(node->value[0]=='{')
-                        t++;
-                    else if(node->value[0]=='}')
-                        t--;
+                    if (node!=NULL)
+                    {if(node->value[0]=='{')
+                            t++;
+                        else if(node->value[0]=='}')
+                            t--;}
+                    else return NULL;
                 }
             }
 
@@ -343,27 +515,53 @@ void Tcheck(token * node,char To)
                 while(t!=0)
                 {
                     node=node->next;
-                    if(node->value[0]=='{')
-                        t++;
-                    else if(node->value[0]=='}')
-                        t--;
+                    if (node!=NULL)
+                    {if(node->value[0]=='{')
+                            t++;
+                        else if(node->value[0]=='}')
+                            t--;}
+                    else return NULL;
                 }
             }
 
 
             if ((strcmp(node->value,"int")==0)||(strcmp(node->value,"bool")==0)||(strcmp(node->value,"char")==0))
             {
+                int x=0;
                 while(node->value[0]!=';')
-                    node=node->next;
+                {
+                    if(node->next!=NULL)
+                    {   node=node->next;
+                    }
+                    if(node->next==NULL)
+                    {   x=1;
+                        break;}
+
+                }
+                if (x==1)
+                    return node;
+            }
+            if (strcmp(node->value,"return")==0)
+            {
+                int x=0;
+                while(node->value[0]!=';')
+                {
+                    if(node->next!=NULL)
+                    {   node=node->next;
+                    }
+                    if(node->next==NULL)
+                    {   x=1;
+                        break;}
+                }
             }
 
         }
 
-
-
-
-        node=node->next;
+        if(v!=0)
+            node=node->next;
     }
+    return  node;
+
 }
 
 

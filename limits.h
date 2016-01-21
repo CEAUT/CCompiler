@@ -11,4 +11,6 @@
 #define FILE_PATH_LEN_LIM 500
 #define NUMBER_LEN_LIM 10
 
+//#define DEBUG_MODE
+
 #endif //CCOMPILER_LIMITS_H

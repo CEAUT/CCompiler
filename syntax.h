@@ -15,7 +15,8 @@ extern int Emain;
 
 void Pcheck(token *node,char To);
 void Keycheck(token * node);
-void Tcheck(token * node,char To);
+token * Tcheck(token * node,char To);
+void Pcheck_m(token * node,char To);
 
 void checkPunc(token *head);
 #endif //CCOMPILER_SYNTAX_H

@@ -19,9 +19,9 @@ void preProces(FILE *outStream,char *src)
         if(c == '#') {
             char preprocessLine[LINE_LEN_LIM];
             fgets(preprocessLine,LINE_LEN_LIM,srcFile);
-            printf("Line is %s\n",preprocessLine);
+            //printf("Line is %s\n",preprocessLine);
             char *ppType = stringTokenizer(preprocessLine,' ',0);
-            printf("Type is %s\n",ppType);
+            //printf("Type is %s\n",ppType);
             if(strcmp(ppType,"include") == 0){
                 char *path;
                 path = stringTokenizer(preprocessLine,34,1);
@@ -268,7 +268,9 @@ int getType(char chr)
             (chr == '=') || (chr == '*') ||
             (chr == '/') || (chr == '>') ||
             (chr == '<') || (chr == '!') ||
-            (chr == '&') || (chr == '|'))
+            (chr == '&') || (chr == '|') ||
+            (chr == '%')
+            )
         return OPERATOR_TOKEN;
 
     if ((chr == '+') || (chr == '-') ||
@@ -352,11 +354,13 @@ int idOrKeyword(char *value)
         return KEYWORD_TOKEN;
     }else if(strcmp(value,"main") == 0){
         return KEYWORD_TOKEN;
-    }else if(strcmp(value,"null") == 0){
+    }else if(strcmp(value,"NULL") == 0){
         return KEYWORD_TOKEN;
     }else if(strcmp(value,"min") == 0){
         return KEYWORD_TOKEN;
     }else if(strcmp(value,"max") == 0) {
+        return KEYWORD_TOKEN;
+    }else if(strcmp(value,"return") == 0) {
         return KEYWORD_TOKEN;
     }else{
         return IDENTIFIER_TOKEN;

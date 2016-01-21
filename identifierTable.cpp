@@ -6,6 +6,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <malloc.h>
+#include "irgen.h"
 #include "identifierTable.h"
 #include "errorgen.h"
 
@@ -33,7 +34,6 @@ char *newTempMem()
     char *res = (char *)malloc((NUMBER_LEN_LIM + 2) * sizeof(char));
     sprintf(res,"_t%d",numOfTemp);
     numOfTemp++;
-    //printf("khar %d\n",sizeof(res));
     return res;
 }
 
@@ -192,11 +192,17 @@ char *newNumber(char *value)
         strcpy(lastOfNumber->value, value);
         numOfNumber++;
         sprintf(res, "_n%d", lastOfNumber->id);
+#ifdef DEBUG_MODE
+        printf("%s := %s\n",res,value);
+#else
+        fprintf(irfile,"%s := %s\n",res,value);
+#endif
     } else {
 
         // This number is existed in the linked list and it can be reusable
         sprintf(res, "_n%d", num->id);
     }
+
     return res;
 }
 
